@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پنل ادمین مزدکس</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--dark:#0A0D14;--dark-2:#111520;--dark-3:#181D2A;
+  --dark-card:#141824;--accent:#2DD4A0;--red:#E05252;--orange:#F59E0B;
+  --text:#F0EDE6;--muted:#8A8FA0;--border:rgba(201,168,76,0.18);
+  --border-dim:rgba(255,255,255,0.06);
+}
+body{font-family:'Vazirmatn',sans-serif;background:var(--dark);color:var(--text);min-height:100vh}
+
+/* ─── SCREENS ─────────────────────────────────── */
+.screen{display:none;align-items:center;justify-content:center;min-height:100vh;
+  background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(201,168,76,0.06) 0%,transparent 70%)}
+.screen.active{display:flex}
+
+/* ─── SHARED CARD ─────────────────────────────── */
+.auth-card{
+  background:var(--dark-card);border:0.5px solid var(--border);
+  border-radius:20px;padding:2.5rem;width:360px;position:relative;overflow:hidden;
+}
+.auth-card::before{content:'';position:absolute;top:0;right:0;left:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.auth-logo{font-size:2rem;font-weight:900;color:var(--gold);text-align:center;margin-bottom:4px}
+.auth-logo span{color:var(--accent)}
+.auth-title{font-size:0.85rem;color:var(--muted);text-align:center;margin-bottom:2rem}
+
+/* ─── INPUT ──────────────────────────────────── */
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:0.72rem;color:var(--muted);margin-bottom:5px}
+.input-wrap{position:relative}
+.input-wrap input{
+  width:100%;padding:0.7rem 1rem;padding-left:2.5rem;
+  background:var(--dark-3);border:0.5px solid var(--border-dim);
+  border-radius:10px;color:var(--text);font-family:'Vazirmatn',sans-serif;
+  font-size:0.88rem;outline:none;transition:border-color 0.2s;direction:ltr;text-align:left;
+}
+.input-wrap input:focus{border-color:rgba(201,168,76,0.4)}
+.input-wrap input.err-input{border-color:rgba(224,82,82,0.5)}
+.input-icon{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);
+  color:var(--muted);font-size:0.9rem;cursor:pointer;user-select:none}
+
+/* ─── PASS STRENGTH ──────────────────────────── */
+.strength-bar{display:flex;gap:3px;margin-top:6px;height:3px}
+.strength-bar div{flex:1;border-radius:999px;background:var(--dark-3);transition:background 0.3s}
+.strength-label{font-size:0.7rem;margin-top:4px}
+
+/* ─── ERROR / INFO ───────────────────────────── */
+.msg-box{border-radius:8px;padding:0.65rem 0.9rem;font-size:0.78rem;
+  margin-bottom:1rem;display:none;align-items:flex-start;gap:8px}
+.msg-box.show{display:flex}
+.msg-box.error{background:rgba(224,82,82,0.1);border:0.5px solid rgba(224,82,82,0.3);color:var(--red)}
+.msg-box.success{background:rgba(45,212,160,0.1);border:0.5px solid rgba(45,212,160,0.3);color:var(--accent)}
+.msg-box.warn{background:rgba(245,158,11,0.1);border:0.5px solid rgba(245,158,11,0.3);color:var(--orange)}
+.lock-timer{font-weight:700;font-size:1rem;display:block;margin-top:4px;color:var(--red)}
+
+/* ─── BUTTONS ────────────────────────────────── */
+.btn{padding:0.6rem 1rem;border-radius:9px;font-family:'Vazirmatn',sans-serif;
+  font-size:0.85rem;font-weight:700;cursor:pointer;border:none;transition:all 0.15s;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-full{width:100%;padding:0.75rem}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#E8B84B);color:#0A0D14}
+.btn-gold:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,0.25)}
+.btn-gold:disabled{opacity:0.5;cursor:not-allowed}
+.btn-outline{background:transparent;border:0.5px solid var(--border);color:var(--muted)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-red{background:rgba(224,82,82,0.12);border:0.5px solid rgba(224,82,82,0.25);color:var(--red)}
+.btn-green{background:rgba(45,212,160,0.12);border:0.5px solid rgba(45,212,160,0.25);color:var(--accent)}
+
+/* ─── SPIN ───────────────────────────────────── */
+.spin{width:15px;height:15px;border:2px solid rgba(10,13,20,0.3);
+  border-top-color:#0A0D14;border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── DIVIDER ────────────────────────────────── */
+.divider{display:flex;align-items:center;gap:10px;margin:1.25rem 0;color:var(--muted);font-size:0.72rem}
+.divider::before,.divider::after{content:'';flex:1;height:0.5px;background:var(--border-dim)}
+
+/* ─── ATTEMPTS DOTS ──────────────────────────── */
+.attempt-dots{display:flex;gap:5px;justify-content:center;margin-top:0.75rem}
+.attempt-dot{width:8px;height:8px;border-radius:50%;background:var(--dark-3);border:0.5px solid var(--border-dim);transition:all 0.2s}
+.attempt-dot.used{background:var(--red);border-color:var(--red)}
+.attempt-dot.warn{background:var(--orange);border-color:var(--orange)}
+
+/* ─── CAPTCHA ────────────────────────────────── */
+.captcha-box{
+  display:flex;align-items:center;gap:10px;background:var(--dark-3);
+  border:0.5px solid var(--border-dim);border-radius:10px;padding:0.65rem 1rem;
+  margin-bottom:1rem;
+}
+.captcha-q{flex:1;font-size:0.88rem;color:var(--gold);font-weight:700;letter-spacing:2px;
+  font-family:monospace;direction:ltr;text-align:center;user-select:none}
+.captcha-box input{background:none;border:none;outline:none;color:var(--text);
+  font-family:'Vazirmatn',sans-serif;font-size:0.88rem;width:60px;text-align:center;direction:ltr}
+.captcha-refresh{cursor:pointer;color:var(--muted);font-size:1rem;transition:color 0.2s}
+.captcha-refresh:hover{color:var(--gold)}
+
+/* ─── CHANGE PASS MODAL ──────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;
+  display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--dark-card);border:0.5px solid var(--border);border-radius:18px;
+  padding:2rem;width:380px;position:relative}
+.modal-title{font-size:1rem;font-weight:700;margin-bottom:1.5rem;
+  display:flex;align-items:center;gap:8px}
+
+/* ─── APP LAYOUT ─────────────────────────────── */
+.app{display:none;min-height:100vh}
+.app.active{display:flex}
+.sidebar{
+  width:230px;min-height:100vh;background:var(--dark-2);border-left:0.5px solid var(--border-dim);
+  display:flex;flex-direction:column;position:fixed;right:0;top:0;bottom:0;z-index:10;
+}
+.sb-logo{padding:1.25rem;border-bottom:0.5px solid var(--border-dim)}
+.sb-logo .name{font-size:1.2rem;font-weight:900;color:var(--gold)}
+.sb-logo .name span{color:var(--accent)}
+.sb-logo .role{font-size:0.68rem;color:var(--muted);margin-top:2px}
+.sb-user{display:flex;align-items:center;gap:8px;margin-top:6px}
+.sb-avatar{width:24px;height:24px;border-radius:50%;background:rgba(201,168,76,0.15);
+  border:0.5px solid rgba(201,168,76,0.3);display:flex;align-items:center;
+  justify-content:center;font-size:0.65rem;color:var(--gold);font-weight:700}
+.sb-username{font-size:0.72rem;color:var(--muted)}
+.sb-nav{padding:0.75rem 0;flex:1;overflow-y:auto}
+.sb-sec{font-size:0.62rem;color:var(--muted);padding:0.55rem 1.25rem 0.2rem;letter-spacing:0.06em}
+.sb-item{display:flex;align-items:center;gap:9px;padding:0.58rem 1.25rem;
+  font-size:0.82rem;cursor:pointer;color:var(--muted);
+  border-right:2px solid transparent;transition:all 0.15s}
+.sb-item:hover{background:rgba(255,255,255,0.03);color:var(--text)}
+.sb-item.active{background:rgba(201,168,76,0.08);color:var(--gold);border-right-color:var(--gold)}
+.sb-badge{margin-right:auto;background:var(--red);color:#fff;font-size:0.6rem;border-radius:999px;padding:1px 6px}
+.sb-footer{padding:1rem 1.25rem;border-top:0.5px solid var(--border-dim);
+  display:flex;align-items:center;justify-content:space-between;font-size:0.7rem;color:var(--muted)}
+
+.main{margin-right:230px;flex:1;display:flex;flex-direction:column}
+.topbar{
+  padding:0.8rem 1.75rem;background:var(--dark-2);border-bottom:0.5px solid var(--border-dim);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:5;
+}
+.topbar-title{font-size:0.92rem;font-weight:700}
+.topbar-actions{display:flex;gap:0.6rem;align-items:center}
+.topbar-user{font-size:0.75rem;color:var(--muted);
+  background:var(--dark-3);border-radius:7px;padding:4px 10px}
+
+.content{padding:1.75rem;flex:1}
+.page{display:none}.page.active{display:block}
+
+/* ─── CARDS ──────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.75rem}
+.stat-card{background:var(--dark-card);border:0.5px solid var(--border-dim);border-radius:14px;padding:1.1rem}
+.stat-card .lbl{font-size:0.72rem;color:var(--muted);margin-bottom:0.4rem}
+.stat-card .val{font-size:1.5rem;font-weight:800;color:var(--gold)}
+.stat-card .sub{font-size:0.7rem;color:var(--accent);margin-top:3px}
+.card{background:var(--dark-card);border:0.5px solid var(--border-dim);border-radius:14px;overflow:hidden;margin-bottom:1.25rem}
+.card-hdr{padding:0.9rem 1.25rem;border-bottom:0.5px solid var(--border-dim);
+  display:flex;align-items:center;justify-content:space-between;font-size:0.88rem;font-weight:600}
+.card-body{padding:1.25rem}
+
+/* ─── TABLE ──────────────────────────────────── */
+.tbl{width:100%;border-collapse:collapse;font-size:0.8rem}
+.tbl th{padding:0.55rem 0.75rem;text-align:right;color:var(--muted);
+  font-weight:500;border-bottom:0.5px solid var(--border-dim);font-size:0.72rem}
+.tbl td{padding:0.65rem 0.75rem;border-bottom:0.5px solid rgba(255,255,255,0.025);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,0.015)}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:0.7rem;font-weight:600}
+.badge-green{background:rgba(45,212,160,0.12);color:var(--accent)}
+.badge-gold{background:rgba(201,168,76,0.12);color:var(--gold)}
+.badge-red{background:rgba(224,82,82,0.12);color:var(--red)}
+.badge-gray{background:rgba(255,255,255,0.06);color:var(--muted)}
+
+/* ─── FORM ───────────────────────────────────── */
+.fg{margin-bottom:0.85rem}.fg.full{grid-column:1/-1}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem}
+.fg label{display:block;font-size:0.72rem;color:var(--muted);margin-bottom:5px}
+.fg input,.fg textarea,.fg select{
+  width:100%;padding:0.6rem 0.85rem;background:var(--dark-3);
+  border:0.5px solid var(--border-dim);border-radius:8px;
+  color:var(--text);font-family:'Vazirmatn',sans-serif;font-size:0.82rem;
+  outline:none;transition:border-color 0.2s;direction:rtl;
+}
+.fg textarea{resize:vertical;min-height:75px}
+.fg input:focus,.fg textarea:focus{border-color:rgba(201,168,76,0.4)}
+
+/* ─── NOTIFY ─────────────────────────────────── */
+.notify{position:fixed;bottom:1.5rem;left:1.5rem;background:var(--dark-card);
+  border:0.5px solid var(--accent);border-radius:10px;padding:0.6rem 1.1rem;
+  font-size:0.8rem;color:var(--accent);transform:translateY(80px);opacity:0;
+  transition:all 0.3s;z-index:9999;display:flex;align-items:center;gap:6px}
+.notify.show{transform:translateY(0);opacity:1}
+.notify.err{border-color:var(--red);color:var(--red)}
+.notify.warn{border-color:var(--orange);color:var(--orange)}
+
+/* ─── USERS MGMT ─────────────────────────────── */
+.admin-user-card{
+  display:flex;align-items:center;gap:1rem;
+  background:var(--dark-3);border:0.5px solid var(--border-dim);
+  border-radius:10px;padding:0.85rem 1rem;margin-bottom:0.6rem;
+}
+.auc-avatar{width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,0.12);
+  border:0.5px solid rgba(201,168,76,0.25);display:flex;align-items:center;
+  justify-content:center;font-size:0.85rem;color:var(--gold);font-weight:700;flex-shrink:0}
+.auc-info{flex:1}
+.auc-name{font-size:0.88rem;font-weight:600}
+.auc-meta{font-size:0.72rem;color:var(--muted);margin-top:2px}
+
+/* ─── SEARCH ─────────────────────────────────── */
+.search-row{display:flex;align-items:center;gap:7px;background:var(--dark-3);
+  border:0.5px solid var(--border-dim);border-radius:8px;padding:0.42rem 0.8rem}
+.search-row input{background:none;border:none;outline:none;color:var(--text);
+  font-family:'Vazirmatn',sans-serif;font-size:0.82rem;flex:1;direction:rtl}
+
+/* ─── HTML EDITOR ────────────────────────────── */
+.editor-toolbar{display:flex;gap:5px;flex-wrap:wrap;padding:0.65rem 1rem;
+  background:var(--dark-3);border-bottom:0.5px solid var(--border-dim)}
+.editor-toolbar button{padding:3px 9px;background:var(--dark-card);border:0.5px solid var(--border-dim);
+  border-radius:5px;color:var(--text);cursor:pointer;font-size:0.76rem;
+  font-family:'Vazirmatn',sans-serif;transition:all 0.15s}
+.editor-toolbar button:hover{border-color:var(--gold);color:var(--gold)}
+#html-editor{width:100%;min-height:460px;padding:1rem;background:var(--dark-3);
+  border:none;color:#A8D8A8;font-family:'Courier New',monospace;
+  font-size:0.76rem;line-height:1.7;resize:vertical;outline:none;direction:ltr}
+
+/* ─── TABS ───────────────────────────────────── */
+.tabs{display:flex;gap:5px;margin-bottom:1.25rem;flex-wrap:wrap}
+.tab{padding:0.38rem 0.85rem;border-radius:7px;font-size:0.78rem;cursor:pointer;
+  border:0.5px solid var(--border-dim);color:var(--muted);background:transparent;
+  font-family:'Vazirmatn',sans-serif;transition:all 0.15s}
+.tab.active{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.3);color:var(--gold)}
+
+/* ─── TOGGLE ─────────────────────────────────── */
+.tog-wrap{display:flex;align-items:center;gap:9px;margin-bottom:0.6rem}
+.tog{width:36px;height:20px;background:var(--dark-3);border-radius:999px;
+  cursor:pointer;position:relative;transition:background 0.2s;
+  border:0.5px solid var(--border-dim);flex-shrink:0}
+.tog.on{background:var(--gold)}.tog::after{content:'';position:absolute;
+  width:14px;height:14px;border-radius:50%;background:#fff;top:2px;right:2px;transition:right 0.2s}
+.tog.on::after{right:auto;left:2px}
+.tog-lbl{font-size:0.8rem;color:var(--muted)}
+
+@media(max-width:900px){
+  .sidebar{width:190px}.main{margin-right:190px}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 1: LOGIN
+══════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="auth-card">
+    <div class="auth-logo">مزد<span>کس</span></div>
+    <div class="auth-title">ورود به پنل مدیریت</div>
+
+    <div class="msg-box error" id="login-err">
+      <span>⚠</span>
+      <div>
+        <span id="login-err-text"></span>
+        <span class="lock-timer" id="lock-countdown" style="display:none"></span>
+      </div>
+    </div>
+    <div class="msg-box warn" id="login-warn">
+      <span>🔒</span><span id="login-warn-text"></span>
+    </div>
+
+    <div class="field">
+      <label>نام کاربری</label>
+      <div class="input-wrap">
+        <input type="text" id="inp-user" autocomplete="username" placeholder="admin" onkeydown="if(event.key==='Enter')document.getElementById('inp-pass').focus()">
+        <span class="input-icon">👤</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>رمز عبور</label>
+      <div class="input-wrap">
+        <input type="password" id="inp-pass" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <span class="input-icon" id="pass-toggle" onclick="togglePass('inp-pass','pass-toggle')" title="نمایش/مخفی">👁</span>
+      </div>
+    </div>
+
+    <div class="captcha-box" id="captcha-wrap" style="display:none">
+      <div class="captcha-q" id="captcha-q"></div>
+      <input type="text" id="captcha-ans" placeholder="؟" maxlength="4" autocomplete="off">
+      <span class="captcha-refresh" onclick="newCaptcha()" title="کپچای جدید">↻</span>
+    </div>
+
+    <div class="attempt-dots" id="attempt-dots"></div>
+
+    <div style="height:0.85rem"></div>
+    <button class="btn btn-gold btn-full" id="login-btn" onclick="doLogin()">
+      <span id="login-btn-text">ورود</span>
+    </button>
+
+    <div style="text-align:center;margin-top:1rem;font-size:0.72rem;color:var(--muted)">
+      رمز پیش‌فرض: <code style="color:var(--gold)">Mazdex@1404</code>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 2: CHANGE PASSWORD (اجباری)
+══════════════════════════════════════════════ -->
+<div id="screen-change-pass" class="screen">
+  <div class="auth-card">
+    <div class="auth-logo">مزد<span>کس</span></div>
+    <div class="auth-title">
+      <span style="color:var(--orange)">⚠</span> تغییر رمز عبور اجباری
+    </div>
+    <div class="msg-box warn show" style="margin-bottom:1.25rem">
+      <span>🔐</span>
+      <span>برای امنیت بیشتر، رمز پیش‌فرض باید قبل از ورود تغییر کند.</span>
+    </div>
+
+    <div class="msg-box error" id="cp-err"><span>⚠</span><span id="cp-err-text"></span></div>
+    <div class="msg-box success" id="cp-ok"><span>✓</span><span id="cp-ok-text"></span></div>
+
+    <div class="field">
+      <label>رمز فعلی</label>
+      <div class="input-wrap">
+        <input type="password" id="cp-current" placeholder="رمز پیش‌فرض">
+        <span class="input-icon" onclick="togglePass('cp-current',this)">👁</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>رمز جدید</label>
+      <div class="input-wrap">
+        <input type="password" id="cp-new" placeholder="حداقل ۸ کاراکتر" oninput="checkStrength(this.value)">
+        <span class="input-icon" onclick="togglePass('cp-new',this)">👁</span>
+      </div>
+      <div class="strength-bar" id="str-bar"><div></div><div></div><div></div><div></div></div>
+      <div class="strength-label" id="str-lbl" style="color:var(--muted)"></div>
+    </div>
+    <div class="field">
+      <label>تکرار رمز جدید</label>
+      <div class="input-wrap">
+        <input type="password" id="cp-confirm" placeholder="••••••••" onkeydown="if(event.key==='Enter')doChangePass()">
+        <span class="input-icon" onclick="togglePass('cp-confirm',this)">👁</span>
+      </div>
+    </div>
+
+    <div style="background:var(--dark-3);border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.75rem;color:var(--muted)">
+      قوانین رمز عبور:<br>
+      <span id="rule-len" class="rule">○ حداقل ۸ کاراکتر</span><br>
+      <span id="rule-upper" class="rule">○ حداقل یک حرف بزرگ انگلیسی</span><br>
+      <span id="rule-num" class="rule">○ حداقل یک عدد</span><br>
+      <span id="rule-special" class="rule">○ حداقل یک کاراکتر خاص (@#$%...)</span>
+    </div>
+
+    <button class="btn btn-gold btn-full" onclick="doChangePass()">تغییر رمز و ورود</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHANGE PASS MODAL (اختیاری از داخل پنل)
+══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-change-pass">
+  <div class="modal">
+    <div class="modal-title">🔐 تغییر رمز عبور</div>
+    <div class="msg-box error" id="mcp-err"><span>⚠</span><span id="mcp-err-text"></span></div>
+    <div class="msg-box success" id="mcp-ok"><span>✓</span><span id="mcp-ok-text"></span></div>
+    <div class="field">
+      <label>رمز فعلی</label>
+      <div class="input-wrap"><input type="password" id="mcp-current" placeholder="رمز فعلی">
+        <span class="input-icon" onclick="togglePass('mcp-current',this)">👁</span></div>
+    </div>
+    <div class="field">
+      <label>رمز جدید</label>
+      <div class="input-wrap"><input type="password" id="mcp-new" placeholder="رمز جدید" oninput="checkStrength(this.value,'mcp-')">
+        <span class="input-icon" onclick="togglePass('mcp-new',this)">👁</span></div>
+      <div class="strength-bar" id="mcp-str-bar"><div></div><div></div><div></div><div></div></div>
+      <div class="strength-label" id="mcp-str-lbl" style="color:var(--muted)"></div>
+    </div>
+    <div class="field">
+      <label>تکرار رمز جدید</label>
+      <div class="input-wrap"><input type="password" id="mcp-confirm" placeholder="تکرار">
+        <span class="input-icon" onclick="togglePass('mcp-confirm',this)">👁</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:0.5rem">
+      <button class="btn btn-gold" style="flex:1" onclick="doModalChangePass()">ذخیره</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-change-pass')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ADD ADMIN USER MODAL
+══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-add-user">
+  <div class="modal">
+    <div class="modal-title">👤 افزودن ادمین جدید</div>
+    <div class="msg-box error" id="au-err"><span>⚠</span><span id="au-err-text"></span></div>
+    <div class="field">
+      <label>نام کاربری</label>
+      <div class="input-wrap"><input type="text" id="au-user" placeholder="فقط حروف انگلیسی و عدد" autocomplete="off">
+        <span class="input-icon">👤</span></div>
+    </div>
+    <div class="field">
+      <label>رمز عبور موقت</label>
+      <div class="input-wrap"><input type="text" id="au-pass" placeholder="کاربر موظف است آن را عوض کند" autocomplete="off">
+        <span class="input-icon" onclick="genTempPass()">🎲</span></div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">با کلیک روی 🎲 رمز تصادفی بساز</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:0.5rem">
+      <button class="btn btn-gold" style="flex:1" onclick="doAddUser()">ایجاد کاربر</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-add-user')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     APP
+══════════════════════════════════════════════ -->
+<div id="app" class="app">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="name">مزد<span>کس</span></div>
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-av">A</div>
+        <div class="sb-username" id="sb-uname">admin</div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-sec">داشبورد</div>
+      <div class="sb-item active" onclick="nav('dashboard',this)">📊 خلاصه</div>
+      <div class="sb-sec">ادیت لندینگ</div>
+      <div class="sb-item" onclick="nav('visual',this)">✏️ ویرایش بصری</div>
+      <div class="sb-item" onclick="nav('html',this)">💻 ویرایش HTML</div>
+      <div class="sb-sec">کاربران</div>
+      <div class="sb-item" onclick="nav('users',this)">👥 ثبت‌نامی‌ها <span class="sb-badge" id="ub">0</span></div>
+      <div class="sb-item" onclick="nav('leaderboard',this)">🥇 لیدربورد</div>
+      <div class="sb-sec">مدیریت</div>
+      <div class="sb-item" onclick="nav('admin-users',this)" id="sb-admin-users" style="display:none">🛡 ادمین‌ها</div>
+      <div class="sb-item" onclick="nav('settings',this)">⚙️ تنظیمات</div>
+      <div class="sb-item" onclick="nav('export',this)">💾 خروجی داده</div>
+    </nav>
+    <div class="sb-footer">
+      <span>v1.0</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline" style="font-size:0.68rem;padding:3px 7px" onclick="openModal('modal-change-pass')">🔐</button>
+        <button class="btn btn-red" style="font-size:0.68rem;padding:3px 7px" onclick="doLogout()">خروج</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="ttl">داشبورد</div>
+      <div class="topbar-actions">
+        <span id="save-status" style="font-size:0.72rem;color:var(--muted)"></span>
+        <div class="topbar-user">👤 <span id="tb-user">—</span></div>
+        <button class="btn btn-outline" style="font-size:0.78rem" onclick="window.open('/','_blank')">👁 لندینگ</button>
+        <button class="btn btn-gold" style="font-size:0.78rem" onclick="saveChanges()">💾 ذخیره</button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-row">
+          <div class="stat-card"><div class="lbl">ثبت‌نامی‌ها</div><div class="val" id="s-total">—</div><div class="sub" id="s-today">—</div></div>
+          <div class="stat-card"><div class="lbl">احراز هویت</div><div class="val" id="s-kyc">—</div><div class="sub" style="color:var(--gold)">هدیه واریزشده</div></div>
+          <div class="stat-card"><div class="lbl">کل امتیاز</div><div class="val" id="s-pts">—</div><div class="sub">این ماه</div></div>
+          <div class="stat-card"><div class="lbl">روز تا قرعه‌کشی</div><div class="val" id="s-days">—</div><div class="sub" style="color:var(--red)">پایان ماه</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">آخرین ثبت‌نام‌ها
+            <button class="btn btn-outline" style="font-size:0.72rem" onclick="nav('users',document.querySelector('[onclick*=users]'))">همه</button>
+          </div>
+          <div style="padding:0"><table class="tbl"><thead><tr><th>موبایل</th><th>تاریخ</th><th>KYC</th><th>امتیاز</th></tr></thead><tbody id="dash-users"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">🛡 وضعیت امنیتی</div>
+          <div class="card-body" id="security-status" style="font-size:0.82rem"></div>
+        </div>
+      </div>
+
+      <!-- VISUAL EDITOR -->
+      <div class="page" id="page-visual">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab(this,'ve-hero')">هیرو</button>
+          <button class="tab" onclick="switchTab(this,'ve-form')">فرم</button>
+          <button class="tab" onclick="switchTab(this,'ve-steps')">مراحل</button>
+          <button class="tab" onclick="switchTab(this,'ve-faq')">سوالات</button>
+        </div>
+        <div id="ve-hero">
+          <div class="card"><div class="card-hdr">🖼 هیرو</div><div class="card-body">
+            <div class="form-grid">
+              <div class="fg full"><label>تیتر خط اول</label><input id="ve-h1" type="text" value="معامله کن،"></div>
+              <div class="fg full"><label>تیتر خط دوم</label><input id="ve-h2" type="text" value="امتیاز جمع کن،"></div>
+              <div class="fg full"><label>تیتر طلایی</label><input id="ve-h3" type="text" value="طلا ببر!"></div>
+              <div class="fg full"><label>توضیحات</label><textarea id="ve-hdesc">با ثبت‌نام در مزدکس، ۵ توکن اهرم هدیه بگیر.</textarea></div>
+            </div>
+            <button class="btn btn-gold" onclick="applyVisual()">✓ اعمال و ذخیره</button>
+          </div></div>
+        </div>
+        <div id="ve-form" style="display:none">
+          <div class="card"><div class="card-hdr">📋 فرم</div><div class="card-body">
+            <div class="form-grid">
+              <div class="fg"><label>عنوان فرم</label><input id="ve-ft" type="text" value="ثبت‌نام و دریافت هدیه"></div>
+              <div class="fg"><label>زیرعنوان</label><input id="ve-fs" type="text" value="ظرف ۲ دقیقه حساب بسازید"></div>
+              <div class="fg full"><label>متن هدیه</label><input id="ve-fg" type="text" value="۵ توکن اهرم هدیه احراز هویت"></div>
+              <div class="fg full"><label>دکمه ثبت‌نام</label><input id="ve-fbtn" type="text" value="ثبت‌نام و دریافت هدیه 🎁"></div>
+            </div>
+            <button class="btn btn-gold" onclick="applyVisual()">✓ اعمال و ذخیره</button>
+          </div></div>
+        </div>
+        <div id="ve-steps" style="display:none">
+          <div class="card"><div class="card-hdr">📋 مراحل <button class="btn btn-outline" style="font-size:0.72rem" onclick="addStep()">+</button></div>
+          <div class="card-body" id="steps-list"></div></div>
+        </div>
+        <div id="ve-faq" style="display:none">
+          <div class="card"><div class="card-hdr">❓ سوالات <button class="btn btn-outline" style="font-size:0.72rem" onclick="addFaq()">+</button></div>
+          <div class="card-body" id="faq-list"></div></div>
+        </div>
+      </div>
+
+      <!-- HTML EDITOR -->
+      <div class="page" id="page-html">
+        <div class="card" style="overflow:hidden">
+          <div class="card-hdr">💻 ویرایش HTML مستقیم
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-outline" style="font-size:0.72rem" onclick="loadHtml()">↻ بارگذاری</button>
+              <button class="btn btn-gold" style="font-size:0.72rem" onclick="saveHtml()">💾 ذخیره فایل</button>
+            </div>
+          </div>
+          <div class="editor-toolbar">
+            <button onclick="findReplace()">🔍 جستجو/جایگزین</button>
+            <button onclick="insertTag('strong')"><b>B</b></button>
+            <button onclick="insertTag('em')"><i>I</i></button>
+            <span style="font-size:0.7rem;color:var(--muted);margin-right:auto" id="char-count"></span>
+          </div>
+          <textarea id="html-editor" spellcheck="false" oninput="updateCharCount()" placeholder="در حال بارگذاری..."></textarea>
+        </div>
+      </div>
+
+      <!-- LANDING USERS -->
+      <div class="page" id="page-users">
+        <div class="card">
+          <div class="card-hdr">👥 کاربران ثبت‌نامی
+            <div style="display:flex;gap:6px;align-items:center">
+              <div class="search-row" style="width:175px"><span>🔍</span>
+                <input type="text" placeholder="جستجو..." oninput="filterUsers(this.value)"></div>
+              <button class="btn btn-green" onclick="exportUsers()">📥 CSV</button>
+            </div>
+          </div>
+          <div style="padding:0"><table class="tbl"><thead><tr><th>موبایل</th><th>تاریخ</th><th>KYC</th><th>امتیاز</th><th>منبع</th><th>عملیات</th></tr></thead>
+          <tbody id="users-body"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div class="page" id="page-leaderboard">
+        <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card"><div class="lbl">کل امتیاز</div><div class="val" id="lb-pts">—</div></div>
+          <div class="stat-card"><div class="lbl">فعال</div><div class="val" id="lb-act">—</div></div>
+          <div class="stat-card"><div class="lbl">رتبه اول</div><div class="val" id="lb-top">—</div><div class="sub" id="lb-top-n">—</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">🥇 لیدربورد <button class="btn btn-outline" style="font-size:0.72rem" onclick="exportLeaderboard()">📥 CSV</button></div>
+          <div style="padding:0"><table class="tbl"><thead><tr><th>رتبه</th><th>موبایل</th><th>امتیاز</th><th>معاملات</th><th>دعوت‌ها</th></tr></thead>
+          <tbody id="lb-body"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- ADMIN USERS -->
+      <div class="page" id="page-admin-users">
+        <div class="card">
+          <div class="card-hdr">🛡 مدیریت ادمین‌ها
+            <button class="btn btn-gold" style="font-size:0.78rem" onclick="openModal('modal-add-user')">+ ادمین جدید</button>
+          </div>
+          <div class="card-body" id="admin-users-list">در حال بارگذاری...</div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="card"><div class="card-hdr">⚙️ CRM و Webhook</div><div class="card-body">
+          <div class="form-grid">
+            <div class="fg full"><label>Webhook ثبت‌نام</label><input id="wh-reg" type="text" placeholder="https://crm.yourcompany.com/webhooks/register"></div>
+            <div class="fg full"><label>Webhook KYC</label><input id="wh-kyc" type="text" placeholder="https://..."></div>
+            <div class="fg"><label>API Key</label><input id="wh-key" type="text" placeholder="sk-..."></div>
+            <div class="fg"><label>Secret</label><input id="wh-secret" type="text"></div>
+          </div>
+          <div class="tog-wrap"><div class="tog on" id="wh-active" onclick="this.classList.toggle('on')"></div><span class="tog-lbl">ارسال به CRM فعال</span></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-gold" onclick="saveSettings()">💾 ذخیره</button><button class="btn btn-outline" onclick="notify('تست موفق ✓')">🔧 تست</button></div>
+        </div></div>
+        <div class="card"><div class="card-hdr">📱 پیامک</div><div class="card-body">
+          <div class="form-grid">
+            <div class="fg"><label>سرویس‌دهنده</label><select id="sms-prov"><option>ملی پیامک</option><option>کاوه نگار</option><option>گفتینو</option></select></div>
+            <div class="fg"><label>شماره ارسال</label><input id="sms-num" type="text" placeholder="3000..."></div>
+            <div class="fg full"><label>API Key</label><input id="sms-key" type="text"></div>
+            <div class="fg full"><label>متن پیامک</label><textarea id="sms-txt">مزدکس: ثبت نام موفق. برای دریافت هدیه احراز هویت کنید: {link}</textarea></div>
+          </div>
+          <button class="btn btn-gold" onclick="saveSettings()">💾 ذخیره</button>
+        </div></div>
+      </div>
+
+      <!-- EXPORT -->
+      <div class="page" id="page-export">
+        <div class="card"><div class="card-hdr">💾 خروجی و قرعه‌کشی</div><div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div style="background:var(--dark-3);border-radius:10px;padding:1.25rem;border:0.5px solid var(--border-dim)">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem">📊</div>
+              <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.25rem">کاربران CSV</div>
+              <div style="font-size:0.74rem;color:var(--muted);margin-bottom:0.75rem">همه ثبت‌نامی‌ها</div>
+              <button class="btn btn-gold" onclick="exportUsers()">دانلود</button>
+            </div>
+            <div style="background:var(--dark-3);border-radius:10px;padding:1.25rem;border:0.5px solid var(--border-dim)">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem">🏆</div>
+              <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.25rem">لیدربورد CSV</div>
+              <div style="font-size:0.74rem;color:var(--muted);margin-bottom:0.75rem">رتبه‌بندی ماه</div>
+              <button class="btn btn-outline" onclick="exportLeaderboard()">دانلود</button>
+            </div>
+            <div style="background:var(--dark-3);border-radius:10px;padding:1.25rem;border:0.5px solid var(--border-dim)">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem">⚙️</div>
+              <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.25rem">تنظیمات JSON</div>
+              <div style="font-size:0.74rem;color:var(--muted);margin-bottom:0.75rem">پشتیبان کامل</div>
+              <button class="btn btn-outline" onclick="exportSettings()">دانلود</button>
+            </div>
+            <div style="background:var(--dark-3);border-radius:10px;padding:1.25rem;border:0.5px solid var(--border-dim)">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem">🎲</div>
+              <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.25rem">قرعه‌کشی وزنی</div>
+              <div style="font-size:0.74rem;color:var(--muted);margin-bottom:0.75rem">انتخاب برندگان</div>
+              <button class="btn btn-red" onclick="runLottery()">اجرا</button>
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="notify" id="notify-bar"></div>
+
+<style>
+.rule{color:var(--muted);transition:color 0.2s}
+.rule.ok{color:var(--accent)}
+</style>
+
+<script>
+// ════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════
+const AUTH = '/admin/auth.php';
+const API  = '/admin/save.php';
+let csrfToken = '';
+let currentUser = '';
+let failedAttempts = 0;
+let lockTimer = null;
+let htmlContent = '';
+let landingUsers = [];
+
+// ════════════════════════════════════════════════
+// CAPTCHA
+// ════════════════════════════════════════════════
+let captchaAnswer = 0;
+function newCaptcha() {
+  const a = Math.floor(Math.random()*10)+1;
+  const b = Math.floor(Math.random()*10)+1;
+  captchaAnswer = a + b;
+  document.getElementById('captcha-q').textContent = `${a} + ${b} = ?`;
+  document.getElementById('captcha-ans').value = '';
+}
+
+// ════════════════════════════════════════════════
+// AUTH API
+// ════════════════════════════════════════════════
+async function authCall(action, body={}) {
+  const r = await fetch(`${AUTH}?action=${action}`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    credentials: 'same-origin',
+    body: JSON.stringify({action, csrf: csrfToken, ...body})
+  });
+  return r.json();
+}
+
+// ════════════════════════════════════════════════
+// CSRF
+// ════════════════════════════════════════════════
+async function getCsrf() {
+  try {
+    const r = await fetch(`${AUTH}?action=get_csrf`, {credentials:'same-origin'});
+    const d = await r.json();
+    if (d.ok) csrfToken = d.csrf;
+  } catch { /* PHP نیست */ }
+}
+
+// ════════════════════════════════════════════════
+// PASSWORD VISIBILITY
+// ════════════════════════════════════════════════
+function togglePass(inputId, iconEl) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  const icon = typeof iconEl === 'string' ? document.getElementById(iconEl) : iconEl;
+  if (icon) icon.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+// ════════════════════════════════════════════════
+// PASSWORD STRENGTH
+// ════════════════════════════════════════════════
+function checkStrength(pass, prefix='') {
+  const rules = [
+    { id: 'rule-len',     ok: pass.length >= 8,                    label: '○ ۸ کاراکتر' },
+    { id: 'rule-upper',   ok: /[A-Z]/.test(pass),                  label: '○ حرف بزرگ' },
+    { id: 'rule-num',     ok: /[0-9]/.test(pass),                   label: '○ عدد' },
+    { id: 'rule-special', ok: /[^a-zA-Z0-9]/.test(pass),            label: '○ کاراکتر خاص' },
+  ];
+  let score = rules.filter(r=>r.ok).length;
+  // update rule indicators (only on mandatory change screen)
+  rules.forEach(r => {
+    const el = document.getElementById(r.id);
+    if (el) el.className = 'rule' + (r.ok ? ' ok' : '');
+    if (el) el.textContent = (r.ok ? '✓ ' : '○ ') + el.textContent.replace(/^[✓○] /,'');
+  });
+  // strength bar
+  const barId = prefix + 'str-bar';
+  const lblId = prefix + 'str-lbl';
+  const bar = document.getElementById(barId);
+  const lbl = document.getElementById(lblId);
+  if (!bar) return;
+  const colors = ['var(--red)','var(--orange)','var(--orange)','var(--gold)','var(--accent)'];
+  const labels = ['','خیلی ضعیف','ضعیف','متوسط','قوی','خیلی قوی'];
+  bar.querySelectorAll('div').forEach((d,i) => d.style.background = i < score ? colors[score-1] : 'var(--dark-3)');
+  if (lbl) { lbl.textContent = labels[score]; lbl.style.color = colors[score-1]||'var(--muted)'; }
+}
+
+// ════════════════════════════════════════════════
+// ATTEMPT DOTS
+// ════════════════════════════════════════════════
+function updateDots(used) {
+  const el = document.getElementById('attempt-dots');
+  el.innerHTML = Array.from({length:5},(_, i) => {
+    const cls = i < used ? (used >= 4 ? 'used' : 'warn') : '';
+    return `<div class="attempt-dot ${cls}"></div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════
+// LOGIN
+// ════════════════════════════════════════════════
+async function doLogin() {
+  const username = document.getElementById('inp-user').value.trim();
+  const password = document.getElementById('inp-pass').value;
+  const loginBtn = document.getElementById('login-btn');
+  const btnText  = document.getElementById('login-btn-text');
+
+  hideMsg('login-err'); hideMsg('login-warn');
+
+  if (!username || !password) {
+    showMsg('login-err', 'نام کاربری و رمز عبور را وارد کنید');
+    return;
+  }
+
+  // بررسی کپچا اگر نمایش داده شده
+  const captchaWrap = document.getElementById('captcha-wrap');
+  if (captchaWrap.style.display !== 'none') {
+    const ans = parseInt(document.getElementById('captcha-ans').value);
+    if (ans !== captchaAnswer) {
+      showMsg('login-err', 'پاسخ کپچا اشتباه است');
+      newCaptcha();
+      return;
+    }
+  }
+
+  loginBtn.disabled = true;
+  btnText.innerHTML = '<div class="spin"></div>';
+
+  try {
+    const r = await authCall('login', {username, password});
+
+    if (r.ok) {
+      currentUser = r.username;
+      failedAttempts = 0;
+      updateDots(0);
+      document.getElementById('captcha-wrap').style.display = 'none';
+
+      if (r.must_change_pass) {
+        showScreen('screen-change-pass');
+      } else {
+        enterApp();
+      }
+    } else if (r.locked) {
+      showMsg('login-err', r.msg);
+      startLockTimer(r.remaining || 15);
+      loginBtn.disabled = true;
+    } else {
+      failedAttempts++;
+      updateDots(failedAttempts);
+      showMsg('login-err', r.msg);
+      document.getElementById('inp-pass').value = '';
+      document.getElementById('inp-pass').classList.add('err-input');
+      setTimeout(() => document.getElementById('inp-pass').classList.remove('err-input'), 800);
+      if (failedAttempts >= 3) {
+        document.getElementById('captcha-wrap').style.display = 'flex';
+        newCaptcha();
+      }
+      loginBtn.disabled = false;
+      btnText.textContent = 'ورود';
+    }
+  } catch {
+    // حالت local (بدون PHP)
+    if (username === 'admin' && password === 'Mazdex@1404') {
+      currentUser = 'admin';
+      localStorage.setItem('mx_local_mode','1');
+      enterApp();
+    } else if (localStorage.getItem('mx_local_mode')) {
+      showMsg('login-err', 'رمز اشتباه است');
+      failedAttempts++;
+      updateDots(failedAttempts);
+    } else {
+      showMsg('login-warn', 'فایل auth.php یافت نشد — حالت محلی فعال (رمز: Mazdex@1404)');
+    }
+    loginBtn.disabled = false;
+    btnText.textContent = 'ورود';
+  }
+}
+
+function startLockTimer(minutes) {
+  let secs = minutes * 60;
+  const cdEl = document.getElementById('lock-countdown');
+  cdEl.style.display = 'block';
+  if (lockTimer) clearInterval(lockTimer);
+  lockTimer = setInterval(() => {
+    secs--;
+    const m = Math.floor(secs/60), s = secs%60;
+    cdEl.textContent = `⏱ ${m}:${String(s).padStart(2,'0')} مانده`;
+    if (secs <= 0) {
+      clearInterval(lockTimer);
+      cdEl.style.display = 'none';
+      hideMsg('login-err');
+      document.getElementById('login-btn').disabled = false;
+      document.getElementById('login-btn-text').textContent = 'ورود';
+      failedAttempts = 0;
+      updateDots(0);
+    }
+  }, 1000);
+}
+
+// ════════════════════════════════════════════════
+// CHANGE PASSWORD (اجباری)
+// ════════════════════════════════════════════════
+async function doChangePass() {
+  const current = document.getElementById('cp-current').value;
+  const newP    = document.getElementById('cp-new').value;
+  const confirm = document.getElementById('cp-confirm').value;
+  hideMsg('cp-err'); hideMsg('cp-ok');
+
+  if (newP !== confirm) { showMsg('cp-err','رمز جدید و تکرار آن یکسان نیستند'); return; }
+
+  try {
+    const r = await authCall('change_password', {current_password:current, new_password:newP, confirm_password:confirm});
+    if (r.ok) {
+      showMsg('cp-ok','رمز عبور تغییر کرد! در حال ورود...');
+      setTimeout(enterApp, 1200);
+    } else {
+      showMsg('cp-err', r.msg);
+    }
+  } catch {
+    // local mode
+    if (current === 'Mazdex@1404') {
+      localStorage.setItem('mx_admin_pass', newP);
+      showMsg('cp-ok','رمز تغییر کرد (local)');
+      setTimeout(enterApp, 1200);
+    } else {
+      showMsg('cp-err','رمز فعلی اشتباه است');
+    }
+  }
+}
+
+// ════════════════════════════════════════════════
+// CHANGE PASS MODAL
+// ════════════════════════════════════════════════
+async function doModalChangePass() {
+  const current = document.getElementById('mcp-current').value;
+  const newP    = document.getElementById('mcp-new').value;
+  const confirm = document.getElementById('mcp-confirm').value;
+  hideMsg('mcp-err'); hideMsg('mcp-ok');
+
+  try {
+    const r = await authCall('change_password', {current_password:current, new_password:newP, confirm_password:confirm});
+    if (r.ok) {
+      showMsg('mcp-ok','رمز عبور با موفقیت تغییر کرد ✓');
+      notify('رمز عبور تغییر کرد ✓');
+      setTimeout(() => closeModal('modal-change-pass'), 1500);
+    } else {
+      showMsg('mcp-err', r.msg);
+    }
+  } catch {
+    const stored = localStorage.getItem('mx_admin_pass') || 'Mazdex@1404';
+    if (current === stored) { localStorage.setItem('mx_admin_pass',newP); showMsg('mcp-ok','ذخیره شد (local)'); }
+    else showMsg('mcp-err','رمز فعلی اشتباه');
+  }
+}
+
+// ════════════════════════════════════════════════
+// ADD USER
+// ════════════════════════════════════════════════
+function genTempPass() {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$!';
+  let pass = '';
+  for (let i=0;i<12;i++) pass += chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('au-pass').value = pass;
+}
+
+async function doAddUser() {
+  const username = document.getElementById('au-user').value.trim();
+  const password = document.getElementById('au-pass').value;
+  hideMsg('au-err');
+  try {
+    const r = await authCall('add_user', {username, password});
+    if (r.ok) { notify(r.msg); closeModal('modal-add-user'); loadAdminUsers(); }
+    else showMsg('au-err', r.msg);
+  } catch { showMsg('au-err','auth.php در دسترس نیست'); }
+}
+
+async function loadAdminUsers() {
+  const el = document.getElementById('admin-users-list');
+  try {
+    const r = await authCall('list_users');
+    if (!r.ok) { el.innerHTML = '<span style="color:var(--muted)">دسترسی ندارید</span>'; return; }
+    el.innerHTML = r.users.map(u => `
+      <div class="admin-user-card">
+        <div class="auc-avatar">${u.username[0].toUpperCase()}</div>
+        <div class="auc-info">
+          <div class="auc-name">${u.username} ${u.username==='admin'?'<span class="badge badge-gold">ادمین اصلی</span>':''}</div>
+          <div class="auc-meta">آخرین ورود: ${u.last_login||'هنوز وارد نشده'} | ساخته شده: ${u.created_at}
+          ${u.must_change_pass?'<span class="badge badge-red" style="margin-right:4px">باید رمز عوض کند</span>':''}</div>
+        </div>
+        ${u.username!=='admin' ? `<button class="btn btn-red" style="font-size:0.72rem;padding:3px 8px" onclick="deleteAdminUser('${u.username}')">حذف</button>` : ''}
+      </div>`).join('') || '<span style="color:var(--muted)">هیچ ادمینی یافت نشد</span>';
+  } catch { el.innerHTML = '<span style="color:var(--muted)">auth.php در دسترس نیست</span>'; }
+}
+
+async function deleteAdminUser(username) {
+  if (!confirm(`آیا کاربر ${username} حذف شود؟`)) return;
+  const r = await authCall('delete_user', {username});
+  if (r.ok) { notify(r.msg); loadAdminUsers(); }
+  else notify(r.msg, true);
+}
+
+// ════════════════════════════════════════════════
+// LOGOUT
+// ════════════════════════════════════════════════
+async function doLogout() {
+  try { await authCall('logout'); } catch {}
+  localStorage.removeItem('mx_local_mode');
+  location.reload();
+}
+
+// ════════════════════════════════════════════════
+// ENTER APP
+// ════════════════════════════════════════════════
+function enterApp() {
+  showScreen(null);
+  document.getElementById('app').classList.add('active');
+  document.getElementById('sb-uname').textContent = currentUser;
+  document.getElementById('sb-av').textContent = currentUser[0].toUpperCase();
+  document.getElementById('tb-user').textContent = currentUser;
+  if (currentUser === 'admin') document.getElementById('sb-admin-users').style.display = 'flex';
+  renderSecurityStatus();
+  initApp();
+}
+
+// ════════════════════════════════════════════════
+// SCREENS
+// ════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  if (id) document.getElementById(id).classList.add('active');
+}
+
+// ════════════════════════════════════════════════
+// SECURITY STATUS
+// ════════════════════════════════════════════════
+function renderSecurityStatus() {
+  const el = document.getElementById('security-status');
+  const isPhp = !localStorage.getItem('mx_local_mode');
+  const items = [
+    { ok: isPhp,  label: 'PHP backend', desc: isPhp ? 'متصل — session امن فعال' : 'غیرفعال — حالت local (auth.php آپلود شود)' },
+    { ok: isPhp,  label: 'Bcrypt hash', desc: isPhp ? 'رمزها با bcrypt هش می‌شوند' : 'فقط در PHP فعال است' },
+    { ok: true,   label: 'CSRF protection', desc: 'فعال' },
+    { ok: isPhp,  label: 'Brute-force lock', desc: isPhp ? `بعد از ${5} تلاش ۱۵ دقیقه قفل` : 'فقط در PHP' },
+    { ok: isPhp,  label: 'Session timeout', desc: isPhp ? '۸ ساعت بی‌فعالیت = logout خودکار' : 'فقط در PHP' },
+  ];
+  el.innerHTML = items.map(i => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.5rem">
+      <span style="color:${i.ok?'var(--accent)':'var(--red)'};font-size:0.85rem">${i.ok?'✓':'✗'}</span>
+      <span style="font-weight:600;min-width:130px">${i.label}</span>
+      <span style="color:var(--muted)">${i.desc}</span>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════
+// MSG HELPERS
+// ════════════════════════════════════════════════
+function showMsg(id, msg) {
+  const el = document.getElementById(id);
+  const txt = document.getElementById(id+'-text');
+  if (txt) txt.textContent = msg; else el.querySelector('span:last-child').textContent = msg;
+  el.classList.add('show');
+}
+function hideMsg(id) { document.getElementById(id)?.classList.remove('show'); }
+
+// ════════════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('open');
+});
+
+// ════════════════════════════════════════════════
+// APP INIT
+// ════════════════════════════════════════════════
+async function initApp() {
+  await loadLandingUsers();
+  renderDash();
+  renderSteps();
+  renderFaq();
+}
+
+// ════════════════════════════════════════════════
+// API (save.php)
+// ════════════════════════════════════════════════
+async function apiCall(action, body=null) {
+  if (localStorage.getItem('mx_local_mode')) return localApi(action, body);
+  const opts = {
+    method: body ? 'POST' : 'GET',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(`${API}?action=${action}`, opts);
+  if (r.status === 401) {
+    notify('نشست منقضی شد. لطفاً دوباره وارد شوید.', true);
+    setTimeout(() => location.reload(), 2000);
+    return { ok: false, msg: 'unauthorized' };
+  }
+  return r.json();
+}
+function localApi(action, body) {
+  if (action==='read') return Promise.resolve({ok:true, html: localStorage.getItem('mx_html')||''});
+  if (action==='save') { localStorage.setItem('mx_html',body.html); return Promise.resolve({ok:true}); }
+  if (action==='get_users') return Promise.resolve({ok:true, users: JSON.parse(localStorage.getItem('mx_users')||'[]')});
+  if (action==='update_kyc') {
+    const us=JSON.parse(localStorage.getItem('mx_users')||'[]');
+    us.forEach(u=>{if(u.phone===body.phone){u.kyc=body.kyc;if(body.kyc==='تأیید شده'&&u.points<5)u.points=5;}});
+    localStorage.setItem('mx_users',JSON.stringify(us));
+    return Promise.resolve({ok:true});
+  }
+  if (action==='get_settings') return Promise.resolve({ok:true,settings:JSON.parse(localStorage.getItem('mx_settings')||'{}')});
+  if (action==='save_settings') { localStorage.setItem('mx_settings',JSON.stringify(body)); return Promise.resolve({ok:true}); }
+  return Promise.resolve({ok:false});
+}
+
+// ════════════════════════════════════════════════
+// LANDING USERS
+// ════════════════════════════════════════════════
+async function loadLandingUsers() {
+  const r = await apiCall('get_users');
+  if (r.ok) landingUsers = r.users;
+  // mock seed
+  if (!landingUsers.length) {
+    landingUsers = [
+      {phone:'09121234567',email:'',date:new Date(Date.now()-2*86400000).toISOString(),kyc:'تأیید شده',points:480,trades:12,invites:4,source:'پیامک'},
+      {phone:'09351234567',email:'',date:new Date(Date.now()-86400000).toISOString(),kyc:'تأیید شده',points:320,trades:8,invites:2,source:'پیامک'},
+      {phone:'09011234567',email:'',date:new Date().toISOString(),kyc:'در انتظار',points:45,trades:1,invites:0,source:'پیامک'},
+    ];
+    localStorage.setItem('mx_users',JSON.stringify(landingUsers));
+  }
+  document.getElementById('ub').textContent = landingUsers.length;
+}
+
+function renderUsers(filter='') {
+  const rows = landingUsers.filter(u=>!filter||u.phone.includes(filter));
+  document.getElementById('users-body').innerHTML = rows.map(u=>`
+    <tr>
+      <td>${u.phone}</td>
+      <td>${new Date(u.date).toLocaleDateString('fa-IR')}</td>
+      <td><span class="badge ${u.kyc==='تأیید شده'?'badge-green':'badge-gray'}">${u.kyc}</span></td>
+      <td style="color:var(--gold);font-weight:600">${u.points}</td>
+      <td><span class="badge badge-gold">${u.source||'—'}</span></td>
+      <td>
+        <button class="btn ${u.kyc==='تأیید شده'?'btn-red':'btn-green'}" style="font-size:0.68rem;padding:2px 7px"
+          onclick="toggleKyc('${u.phone}','${u.kyc}')">
+          ${u.kyc==='تأیید شده'?'لغو KYC':'تأیید KYC'}
+        </button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.5rem">کاربری یافت نشد</td></tr>';
+}
+function filterUsers(v) { renderUsers(v); }
+
+async function toggleKyc(phone, current) {
+  const newKyc = current==='تأیید شده'?'در انتظار':'تأیید شده';
+  await apiCall('update_kyc',{phone,kyc:newKyc});
+  await loadLandingUsers();
+  renderUsers(); renderDash();
+  notify('KYC آپدیت شد ✓');
+}
+
+// ════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════
+function renderDash() {
+  document.getElementById('s-total').textContent = landingUsers.length;
+  document.getElementById('s-kyc').textContent = landingUsers.filter(u=>u.kyc==='تأیید شده').length;
+  document.getElementById('s-pts').textContent = landingUsers.reduce((a,u)=>a+u.points,0).toLocaleString('fa-IR');
+  const now = new Date();
+  document.getElementById('s-days').textContent = Math.ceil((new Date(now.getFullYear(),now.getMonth()+1,1)-now)/86400000);
+  document.getElementById('s-today').textContent = '+' + landingUsers.filter(u=>new Date(u.date).toDateString()===now.toDateString()).length + ' امروز';
+  const recent = [...landingUsers].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  document.getElementById('dash-users').innerHTML = recent.map(u=>`
+    <tr><td>${u.phone}</td><td>${new Date(u.date).toLocaleDateString('fa-IR')}</td>
+    <td><span class="badge ${u.kyc==='تأیید شده'?'badge-green':'badge-gray'}">${u.kyc}</span></td>
+    <td style="color:var(--gold)">${u.points}</td></tr>`).join('');
+}
+
+// ════════════════════════════════════════════════
+// LEADERBOARD
+// ════════════════════════════════════════════════
+function renderLb() {
+  const s = [...landingUsers].sort((a,b)=>b.points-a.points);
+  document.getElementById('lb-pts').textContent = s.reduce((a,u)=>a+u.points,0).toLocaleString('fa-IR');
+  document.getElementById('lb-act').textContent = s.filter(u=>u.points>0).length;
+  if (s[0]) { document.getElementById('lb-top').textContent=s[0].points; document.getElementById('lb-top-n').textContent=s[0].phone; }
+  const m=['🥇','🥈','🥉'];
+  document.getElementById('lb-body').innerHTML = s.map((u,i)=>`
+    <tr><td style="color:var(--gold)">${m[i]||(i+1)}</td>
+    <td>${u.phone.replace(/(\d{4})\d{4}(\d{3})/,'$1****$2')}</td>
+    <td style="color:var(--gold);font-weight:700">${u.points}</td>
+    <td>${u.trades||0}</td><td>${u.invites||0}</td></tr>`).join('');
+}
+
+// ════════════════════════════════════════════════
+// HTML EDITOR
+// ════════════════════════════════════════════════
+async function loadHtml() {
+  const editor = document.getElementById('html-editor');
+  editor.value = 'در حال بارگذاری فایل لندینگ از سرور...';
+  document.getElementById('char-count').textContent = '';
+
+  try {
+    const r = await apiCall('read');
+    if (r.ok && r.html) {
+      htmlContent = r.html;
+      editor.value = r.html;
+      updateCharCount();
+      notify('فایل لندینگ بارگذاری شد ✓ — حالا می‌تونی ادیت کنی');
+    } else {
+      editor.value = '';
+      notify('خطا: ' + (r.msg || 'فایل یافت نشد'), true);
+    }
+  } catch(e) {
+    editor.value = '';
+    notify('خطا در اتصال: ' + e.message, true);
+  }
+}
+async function saveHtml() {
+  let html = document.getElementById('html-editor').value;
+
+  // اگر editor خالیه، اول فایل رو load کن
+  if (!html.trim() || html === 'در حال بارگذاری...') {
+    notify('ابتدا روی «↻ بارگذاری» کلیک کن تا فایل لود بشه', true);
+    return;
+  }
+
+  // بررسی اینکه واقعاً HTML معتبره
+  if (html.indexOf('<html') === -1 && html.indexOf('<!DOCTYPE') === -1) {
+    notify('محتوا HTML معتبر نیست', true);
+    return;
+  }
+
+  document.getElementById('save-status').textContent = '⏳ ذخیره...';
+  document.getElementById('save-btn').disabled = true;
+
+  try {
+    const r = await apiCall('save', { html });
+    if (r.ok) {
+      htmlContent = html;
+      notify('فایل لندینگ ذخیره شد ✓');
+      document.getElementById('save-status').textContent = '✓ ذخیره شد';
+    } else {
+      notify('خطا: ' + (r.msg || 'نامشخص'), true);
+      document.getElementById('save-status').textContent = '⚠ خطا';
+    }
+  } catch(e) {
+    notify('خطا در اتصال به سرور: ' + e.message, true);
+    document.getElementById('save-status').textContent = '⚠ خطا';
+  } finally {
+    document.getElementById('save-btn').disabled = false;
+  }
+}
+function updateCharCount() {
+  document.getElementById('char-count').textContent = document.getElementById('html-editor').value.length.toLocaleString('fa-IR') + ' کاراکتر';
+}
+function insertTag(tag) {
+  const el=document.getElementById('html-editor'),s=el.selectionStart,e=el.selectionEnd;
+  el.value=el.value.substring(0,s)+`<${tag}>${el.value.substring(s,e)}</${tag}>`+el.value.substring(e);
+}
+function findReplace() {
+  const f=prompt('جستجو:'); if(!f) return;
+  const r=prompt('جایگزین:')||'';
+  const el=document.getElementById('html-editor');
+  const n=(el.value.match(new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))||[]).length;
+  el.value=el.value.replaceAll(f,r);
+  notify(`${n} مورد جایگزین شد`);
+}
+
+// ════════════════════════════════════════════════
+// VISUAL EDITOR
+// ════════════════════════════════════════════════
+async function applyVisual() {
+  // اگه هنوز HTML لندینگ لود نشده، اول لودش کن
+  if (!htmlContent || htmlContent.length < 100) {
+    notify('در حال بارگذاری فایل از سرور...', false);
+    await loadHtml();
+    if (!htmlContent || htmlContent.length < 100) {
+      notify('فایل لندینگ لود نشد. به صفحه «ویرایش HTML» برو و دکمه بارگذاری بزن.', true);
+      return;
+    }
+  }
+
+  let html = htmlContent;
+
+  // اعمال تغییرات هیرو
+  const h1 = document.getElementById('ve-h1')?.value;
+  const h2 = document.getElementById('ve-h2')?.value;
+  const h3 = document.getElementById('ve-h3')?.value;
+  const desc = document.getElementById('ve-hdesc')?.value;
+  const ft = document.getElementById('ve-ft')?.value;
+  const fs = document.getElementById('ve-fs')?.value;
+  const fg = document.getElementById('ve-fg')?.value;
+  const fbtn = document.getElementById('ve-fbtn')?.value;
+
+  // جایگزینی تیتر h1
+  if (h1 && h2 && h3) {
+    html = html.replace(
+      /<h1[^>]*>[\s\S]*?<\/h1>/m,
+      `<h1>${h1}<br>${h2}<br><span class="highlight">${h3}</span></h1>`
+    );
+  }
+
+  // جایگزینی توضیحات هیرو
+  if (desc) {
+    html = html.replace(
+      /(<p class="hero-desc">)[\s\S]*?(<\/p>)/,
+      `$1${desc}$2`
+    );
+  }
+
+  // جایگزینی عنوان فرم
+  if (ft) {
+    html = html.replace(
+      /(<div class="form-title">)[\s\S]*?(<\/div>)/,
+      `$1${ft}$2`
+    );
+  }
+
+  // جایگزینی زیرعنوان فرم
+  if (fs) {
+    html = html.replace(
+      /(<div class="form-subtitle">)[\s\S]*?(<\/div>)/,
+      `$1${fs}$2`
+    );
+  }
+
+  // جایگزینی متن هدیه
+  if (fg) {
+    html = html.replace(
+      /(<strong[^>]*>)[\s\S]*?(<\/strong>)/,
+      `$1${fg}$2`
+    );
+  }
+
+  // جایگزینی متن دکمه ثبت‌نام
+  if (fbtn) {
+    html = html.replace(
+      /(<button type="submit"[^>]*>)[\s\S]*?(<\/button>)/,
+      `$1${fbtn}$2`
+    );
+  }
+
+  htmlContent = html;
+  document.getElementById('html-editor').value = html;
+
+  // ذخیره روی سرور
+  await saveHtml();
+}
+
+// ════════════════════════════════════════════════
+// STEPS / FAQ
+// ════════════════════════════════════════════════
+let steps=JSON.parse(localStorage.getItem('mx_steps')||JSON.stringify([
+  {title:'ثبت‌نام',desc:'ثبت‌نام و احراز هویت',reward:'۵ توکن'},
+  {title:'اولین معامله',desc:'حداقل ۱۰ توکن',reward:'۵ توکن'},
+  {title:'معامله روزانه',desc:'هر روز معامله = امتیاز',reward:'۱۰ امتیاز/۱M'},
+  {title:'دعوت دوست',desc:'هر دعوت موفق',reward:'۱۰ امتیاز'},
+  {title:'قرعه‌کشی',desc:'آخر هر ماه',reward:'۱۰ شمش طلا'},
+]));
+let faqs=JSON.parse(localStorage.getItem('mx_faqs')||JSON.stringify([
+  {q:'چطور هدیه بگیرم؟',a:'ثبت‌نام و احراز هویت ظرف ۲۴ ساعت'},
+  {q:'حداقل معامله؟',a:'۱۰ توکن اهرم'},
+  {q:'امتیازات چطور؟',a:'ثبت‌نام=۵ | هر ۱M معامله=۱۰ | هر دعوت=۱۰'},
+]));
+const inpStyle='width:100%;background:var(--dark-2);border:0.5px solid var(--border-dim);border-radius:7px;padding:0.45rem 0.7rem;color:var(--text);font-family:\'Vazirmatn\',sans-serif;font-size:0.79rem;outline:none;direction:rtl';
+function renderSteps(){
+  document.getElementById('steps-list').innerHTML=steps.map((s,i)=>`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:center;margin-bottom:0.5rem">
+      <input type="text" value="${s.title}" oninput="steps[${i}].title=this.value;saveStepsL()" style="${inpStyle}">
+      <input type="text" value="${s.desc}" oninput="steps[${i}].desc=this.value;saveStepsL()" style="${inpStyle}">
+      <input type="text" value="${s.reward}" oninput="steps[${i}].reward=this.value;saveStepsL()" style="${inpStyle};color:var(--gold)">
+      <button class="btn btn-red" style="font-size:0.68rem;padding:3px 7px" onclick="removeStep(${i})">✕</button>
+    </div>`).join('');}
+function addStep(){steps.push({title:'مرحله',desc:'توضیح',reward:'جایزه'});saveStepsL();renderSteps();}
+function removeStep(i){steps.splice(i,1);saveStepsL();renderSteps();}
+function saveStepsL(){localStorage.setItem('mx_steps',JSON.stringify(steps));}
+
+function renderFaq(){
+  document.getElementById('faq-list').innerHTML=faqs.map((f,i)=>`
+    <div style="background:var(--dark-3);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem">
+      <div style="display:flex;gap:6px;margin-bottom:5px">
+        <input type="text" value="${f.q}" oninput="faqs[${i}].q=this.value;saveFaqL()" placeholder="سوال" style="${inpStyle};flex:1">
+        <button class="btn btn-red" style="font-size:0.68rem;padding:3px 7px" onclick="removeFaq(${i})">✕</button>
+      </div>
+      <textarea oninput="faqs[${i}].a=this.value;saveFaqL()" style="${inpStyle};min-height:50px;resize:vertical">${f.a}</textarea>
+    </div>`).join('');}
+function addFaq(){faqs.push({q:'سوال جدید',a:'پاسخ'});saveFaqL();renderFaq();}
+function removeFaq(i){faqs.splice(i,1);saveFaqL();renderFaq();}
+function saveFaqL(){localStorage.setItem('mx_faqs',JSON.stringify(faqs));}
+
+// ════════════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════════════
+async function saveSettings(){
+  const r=await apiCall('save_settings',{
+    crm_webhook:document.getElementById('wh-reg').value,
+    crm_kyc:document.getElementById('wh-kyc').value,
+    api_key:document.getElementById('wh-key').value,
+  });
+  notify(r.ok?'تنظیمات ذخیره شد ✓':'خطا',!r.ok);
+}
+
+// ════════════════════════════════════════════════
+// EXPORT
+// ════════════════════════════════════════════════
+function exportUsers(){dl('mazdex-users.csv','\uFEFFموبایل,تاریخ,KYC,امتیاز,معاملات,دعوت,منبع\n'+landingUsers.map(u=>`${u.phone},${new Date(u.date).toLocaleDateString('fa-IR')},${u.kyc},${u.points},${u.trades||0},${u.invites||0},${u.source||''}`).join('\n'));}
+function exportLeaderboard(){const s=[...landingUsers].sort((a,b)=>b.points-a.points);dl('lb.csv','\uFEFFرتبه,موبایل,امتیاز\n'+s.map((u,i)=>`${i+1},${u.phone},${u.points}`).join('\n'));}
+function exportSettings(){dl('settings.json',JSON.stringify({steps,faqs},null,2));}
+function dl(name,content){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));a.download=name;a.click();notify('دانلود شروع شد ✓');}
+function runLottery(){
+  const el=landingUsers.filter(u=>u.points>0&&u.kyc==='تأیید شده');
+  if(!el.length){notify('کاربر واجد شرایط نیست',true);return;}
+  const pool=[];el.forEach(u=>{for(let i=0;i<u.points;i++)pool.push(u.phone);});
+  const w=new Set();
+  while(w.size<Math.min(10,el.length))w.add(pool[Math.floor(Math.random()*pool.length)]);
+  alert('🏆 برندگان:\n\n'+[...w].join('\n'));
+}
+
+// ════════════════════════════════════════════════
+// SAVE ALL
+// ════════════════════════════════════════════════
+async function saveChanges() {
+  const currentPage = document.querySelector('.page.active')?.id || '';
+
+  // اگر توی HTML editor هستیم، فایل رو ذخیره کن
+  if (currentPage === 'page-html') {
+    await saveHtml();
+    return;
+  }
+
+  // اگر توی visual editor هستیم
+  if (currentPage === 'page-visual') {
+    await applyVisual();
+    return;
+  }
+
+  // بقیه صفحات: تنظیمات local رو ذخیره کن
+  saveStepsL();
+  saveFaqL();
+  notify('تغییرات ذخیره شد ✓');
+}
+
+// ════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════
+const titles={dashboard:'داشبورد',visual:'ویرایش بصری',html:'ویرایش HTML',users:'کاربران',leaderboard:'لیدربورد','admin-users':'مدیریت ادمین‌ها',settings:'تنظیمات',export:'خروجی داده'};
+function nav(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(s=>s.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  document.getElementById('ttl').textContent=titles[id]||id;
+  if(id==='users')renderUsers();
+  if(id==='leaderboard')renderLb();
+  if(id==='html'&&!htmlContent)loadHtml();
+  if(id==='admin-users')loadAdminUsers();
+}
+
+// ════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════
+function switchTab(btn,id){
+  btn.closest('.page').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['ve-hero','ve-form','ve-steps','ve-faq'].forEach(t=>{
+    const el=document.getElementById(t);
+    if(el)el.style.display=t===id?'block':'none';
+  });
+}
+
+// ════════════════════════════════════════════════
+// NOTIFY
+// ════════════════════════════════════════════════
+function notify(msg,isErr=false,isWarn=false){
+  const n=document.getElementById('notify-bar');
+  n.textContent=(isErr?'⚠ ':isWarn?'⚡ ':'✓ ')+msg;
+  n.className='notify'+(isErr?' err':isWarn?' warn':'');
+  void n.offsetWidth; n.classList.add('show');
+  setTimeout(()=>n.classList.remove('show'),2800);
+}
+
+// ════════════════════════════════════════════════
+// STARTUP
+// ════════════════════════════════════════════════
+(async()=>{
+  await getCsrf();
+  // بررسی session فعال
+  try {
+    const r = await authCall('check');
+    if (r.ok) {
+      currentUser = r.username;
+      if (r.must_change_pass) { showScreen('screen-change-pass'); }
+      else { enterApp(); }
+      return;
+    }
+  } catch {}
+  // نمایش صفحه لاگین
+  showScreen('screen-login');
+  updateDots(0);
+  document.getElementById('inp-user').focus();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+    "admin": {
+        "username": "admin",
+        "password": "$2y$12$snV8kyjmHmeqo.hS4iiAMu5asUSgdJrT0SaDus9eNYXaSrYUYB6Nu",
+        "created_at": "2026-06-10 13:16:46",
+        "last_login": "2026-06-13 13:13:29",
+        "must_change_pass": false,
+        "pass_changed_at": "2026-06-10 13:17:59"
+    }
+}
