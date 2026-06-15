@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مزدکس | صرافی ارز دیجیتال</title>
+<meta name="description" content="با ثبت‌نام در مزدکس، ۵ توکن اهرم هدیه بگیر و در قرعه‌کشی ۱۰ شمش طلا شرکت کن!">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #F0D080;
+    --gold-dark: #8B6914;
+    --dark: #0A0D14;
+    --dark-2: #111520;
+    --dark-3: #181D2A;
+    --dark-4: #1E2436;
+    --dark-card: #141824;
+    --accent: #2DD4A0;
+    --accent-dim: rgba(45,212,160,0.12);
+    --text: #F0EDE6;
+    --text-muted: #8A8FA0;
+    --border: rgba(201,168,76,0.18);
+    --border-dim: rgba(255,255,255,0.06);
+    --red: #E05252;
+    --green: #2DD4A0;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; right: 0; left: 0; z-index: 100;
+    padding: 1rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(10,13,20,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .logo {
+    font-size: 1.5rem; font-weight: 900; color: var(--gold);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  nav a {
+    color: var(--text-muted); text-decoration: none; font-size: 0.9rem;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--gold); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 7rem 2rem 4rem;
+    position: relative;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 80% 80%, rgba(45,212,160,0.05) 0%, transparent 60%);
+  }
+  .hero-grid {
+    max-width: 1100px; width: 100%;
+    display: grid; grid-template-columns: 1fr 420px; gap: 4rem; align-items: center;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(201,168,76,0.1);
+    border: 0.5px solid rgba(201,168,76,0.3);
+    border-radius: 999px; padding: 6px 16px;
+    font-size: 0.8rem; color: var(--gold);
+    margin-bottom: 1.5rem;
+  }
+  .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 900; line-height: 1.25;
+    margin-bottom: 1.5rem;
+  }
+  h1 .highlight { color: var(--gold); }
+  h1 .accent { color: var(--accent); }
+  .hero-desc {
+    font-size: 1.05rem; color: var(--text-muted); line-height: 1.8;
+    max-width: 480px; margin-bottom: 2rem;
+  }
+  .hero-stats {
+    display: flex; gap: 2rem; margin-bottom: 2rem;
+  }
+  .stat-item { }
+  .stat-num { font-size: 1.5rem; font-weight: 700; color: var(--gold); }
+  .stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+  .ticker-bar {
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+    margin-bottom: 2rem;
+    padding: 0.75rem 1rem;
+    background: var(--dark-card);
+    border: 0.5px solid var(--border-dim);
+    border-radius: 12px;
+    font-size: 0.82rem;
+  }
+  .ticker-item { display: flex; align-items: center; gap: 6px; }
+  .ticker-name { color: var(--text-muted); }
+  .ticker-price { font-weight: 500; }
+  .ticker-chg.up { color: var(--green); }
+  .ticker-chg.dn { color: var(--red); }
+
+  /* ── FORM CARD ── */
+  .form-card {
+    background: var(--dark-card);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .form-card::before {
+    content: '';
+    position: absolute; top: 0; right: 0; left: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .form-title {
+    font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem;
+  }
+  .form-subtitle {
+    font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.5rem;
+  }
+  .gift-box {
+    background: rgba(201,168,76,0.08);
+    border: 0.5px solid rgba(201,168,76,0.25);
+    border-radius: 12px; padding: 0.85rem 1rem;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.5rem; font-size: 0.85rem;
+  }
+  .gift-icon { font-size: 1.5rem; }
+  .gift-text strong { color: var(--gold); display: block; font-size: 0.95rem; }
+  .gift-text span { color: var(--text-muted); font-size: 0.78rem; }
+
+  .form-group { margin-bottom: 1rem; }
+  label { display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
+  input[type="tel"], input[type="text"], input[type="email"] {
+    width: 100%; padding: 0.7rem 1rem;
+    background: var(--dark-3);
+    border: 0.5px solid var(--border-dim);
+    border-radius: 10px; color: var(--text);
+    font-family: 'Vazirmatn', sans-serif; font-size: 0.9rem;
+    outline: none; transition: border-color 0.2s;
+    direction: ltr; text-align: right;
+  }
+  input:focus { border-color: rgba(201,168,76,0.4); }
+  .checkbox-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1.25rem;
+  }
+  .checkbox-row input[type="checkbox"] { margin-top: 3px; accent-color: var(--gold); }
+  .checkbox-row a { color: var(--gold); }
+
+  .btn-primary {
+    width: 100%; padding: 0.85rem;
+    background: linear-gradient(135deg, var(--gold), #E8B84B);
+    color: #0A0D14; font-family: 'Vazirmatn', sans-serif;
+    font-size: 1rem; font-weight: 700; border: none;
+    border-radius: 12px; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,168,76,0.25); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .form-note { text-align: center; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.75rem; }
+
+  /* ── SUCCESS STATE ── */
+  .success-box {
+    display: none; text-align: center; padding: 1rem 0;
+  }
+  .success-box .check-circle {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: rgba(45,212,160,0.15); border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; margin: 0 auto 1rem;
+  }
+  .success-box h3 { color: var(--accent); margin-bottom: 0.5rem; }
+  .success-box p { font-size: 0.85rem; color: var(--text-muted); }
+
+  /* ── SECTION STYLES ── */
+  section { padding: 5rem 2rem; }
+  .section-center { max-width: 1100px; margin: 0 auto; }
+  .section-tag {
+    display: inline-block; background: rgba(201,168,76,0.1);
+    border: 0.5px solid rgba(201,168,76,0.3); border-radius: 999px;
+    padding: 4px 14px; font-size: 0.75rem; color: var(--gold);
+    margin-bottom: 1rem;
+  }
+  h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 800; margin-bottom: 0.75rem; }
+  h2 .hl { color: var(--gold); }
+
+  /* ── HOW IT WORKS ── */
+  #how { background: var(--dark-2); }
+  .steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem; margin-top: 3rem;
+  }
+  .step-card {
+    background: var(--dark-card);
+    border: 0.5px solid var(--border-dim);
+    border-radius: 16px; padding: 1.5rem;
+    position: relative; transition: border-color 0.2s;
+  }
+  .step-card:hover { border-color: var(--border); }
+  .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(201,168,76,0.12); border: 0.5px solid rgba(201,168,76,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 700; color: var(--gold);
+    margin-bottom: 1rem;
+  }
+  .step-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .step-card p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.7; }
+  .step-reward {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(201,168,76,0.1); border-radius: 8px;
+    padding: 4px 10px; font-size: 0.75rem; color: var(--gold);
+    font-weight: 600; margin-top: 0.75rem;
+  }
+
+  /* ── GAMIFICATION ── */
+  #game { background: var(--dark); }
+  .game-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem;
+  }
+  .points-table {
+    background: var(--dark-card); border: 0.5px solid var(--border-dim);
+    border-radius: 16px; overflow: hidden;
+  }
+  .points-header {
+    padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border-dim);
+    font-size: 0.9rem; font-weight: 600; color: var(--gold);
+  }
+  .points-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.85rem 1.25rem; border-bottom: 0.5px solid var(--border-dim);
+    font-size: 0.85rem;
+  }
+  .points-row:last-child { border-bottom: none; }
+  .points-row .action { color: var(--text-muted); }
+  .points-row .pts { color: var(--gold); font-weight: 700; font-size: 0.9rem; }
+
+  .leaderboard {
+    background: var(--dark-card); border: 0.5px solid var(--border-dim);
+    border-radius: 16px; overflow: hidden;
+  }
+  .lb-header {
+    padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border-dim);
+    font-size: 0.9rem; font-weight: 600; color: var(--accent);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .lb-badge { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; }
+  .lb-row {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.75rem 1.25rem; border-bottom: 0.5px solid var(--border-dim);
+    font-size: 0.82rem;
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { width: 22px; text-align: center; font-weight: 700; font-size: 0.8rem; color: var(--text-muted); }
+  .lb-rank.top { color: var(--gold); }
+  .lb-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--dark-3); display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; color: var(--text-muted);
+  }
+  .lb-name { flex: 1; }
+  .lb-pts { font-weight: 600; color: var(--gold); font-size: 0.85rem; }
+
+  /* ── PRIZE ── */
+  #prize { background: var(--dark-2); }
+  .prize-card {
+    background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.02));
+    border: 0.5px solid rgba(201,168,76,0.3);
+    border-radius: 20px; padding: 3rem;
+    text-align: center; max-width: 680px; margin: 3rem auto 0;
+    position: relative; overflow: hidden;
+  }
+  .prize-card::after {
+    content: '🏆';
+    position: absolute; font-size: 8rem; opacity: 0.05;
+    right: -1rem; top: 50%; transform: translateY(-50%);
+  }
+  .prize-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+  .prize-card h3 { font-size: 1.5rem; font-weight: 800; color: var(--gold); margin-bottom: 0.75rem; }
+  .prize-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.8; max-width: 480px; margin: 0 auto 1.5rem; }
+  .prize-countdown {
+    display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .cd-item { text-align: center; }
+  .cd-num {
+    background: var(--dark-card); border: 0.5px solid var(--border);
+    border-radius: 10px; padding: 0.5rem 0.75rem;
+    font-size: 1.4rem; font-weight: 700; color: var(--gold);
+    min-width: 52px; display: block;
+  }
+  .cd-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0.7rem 2rem; border: 0.5px solid rgba(201,168,76,0.5);
+    border-radius: 10px; color: var(--gold); font-family: 'Vazirmatn', sans-serif;
+    font-size: 0.9rem; font-weight: 600; background: transparent; cursor: pointer;
+    text-decoration: none; transition: background 0.2s;
+  }
+  .btn-outline:hover { background: rgba(201,168,76,0.1); }
+
+  /* ── FEATURES ── */
+  #features { background: var(--dark); }
+  .feat-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem; margin-top: 3rem;
+  }
+  .feat-card {
+    background: var(--dark-card); border: 0.5px solid var(--border-dim);
+    border-radius: 14px; padding: 1.25rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .feat-card:hover { border-color: var(--border); transform: translateY(-2px); }
+  .feat-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .feat-card h4 { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.35rem; }
+  .feat-card p { font-size: 0.75rem; color: var(--text-muted); line-height: 1.6; }
+
+  /* ── FAQ ── */
+  #faq { background: var(--dark-2); }
+  .faq-list { max-width: 700px; margin: 3rem auto 0; }
+  .faq-item {
+    border-bottom: 0.5px solid var(--border-dim); overflow: hidden;
+  }
+  .faq-q {
+    width: 100%; text-align: right; padding: 1.15rem 0;
+    background: none; border: none; color: var(--text);
+    font-family: 'Vazirmatn', sans-serif; font-size: 0.92rem; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  }
+  .faq-arrow { color: var(--gold); font-size: 1rem; transition: transform 0.3s; flex-shrink: 0; }
+  .faq-item.open .faq-arrow { transform: rotate(180deg); }
+  .faq-a {
+    max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+    font-size: 0.82rem; color: var(--text-muted); line-height: 1.8;
+    padding: 0;
+  }
+  .faq-item.open .faq-a { max-height: 200px; padding-bottom: 1rem; }
+
+  /* ── CTA BOTTOM ── */
+  .cta-section {
+    background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(201,168,76,0.07) 0%, transparent 70%);
+    padding: 5rem 2rem; text-align: center;
+  }
+  .cta-section h2 { margin-bottom: 1rem; }
+  .cta-section p { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; }
+  .btn-cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, var(--gold), #E8B84B);
+    color: #0A0D14; font-family: 'Vazirmatn', sans-serif;
+    font-size: 1rem; font-weight: 700; border: none;
+    border-radius: 14px; cursor: pointer; text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(201,168,76,0.3); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--dark-2); border-top: 0.5px solid var(--border-dim);
+    padding: 2.5rem 2rem; text-align: center;
+    font-size: 0.78rem; color: var(--text-muted);
+  }
+  footer .footer-logo { font-size: 1.2rem; font-weight: 900; color: var(--gold); margin-bottom: 0.5rem; }
+  footer .footer-links { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; margin: 1rem 0; }
+  footer a { color: var(--text-muted); text-decoration: none; }
+  footer a:hover { color: var(--gold); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .form-card { margin-top: 2rem; }
+    .game-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 0.75rem 1rem; }
+    .hero { padding-top: 6rem; }
+    h1 { font-size: 1.75rem; }
+    .hero-stats { gap: 1rem; }
+    .prize-card { padding: 2rem 1.25rem; }
+    .prize-countdown { gap: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">مزد<span>کس</span></div>
+  <div style="display:flex;gap:1.5rem;align-items:center">
+    <a href="#how">چطور کار می‌کنه؟</a>
+    <a href="#prize">جوایز</a>
+    <a href="#register" style="background:rgba(201,168,76,0.1);border:0.5px solid rgba(201,168,76,0.3);border-radius:8px;padding:6px 14px;color:var(--gold)">ثبت‌نام</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="register">
+  <div class="hero-grid">
+    <div>
+      <div class="hero-badge"><span class="dot"></span> کمپین ویژه مزدکس فعال است</div>
+      <h1>معامله کن،<br>امتیاز جمع کن،<br><span class="highlight">طلا ببر!</span></h1>
+      <p class="hero-desc">
+        با ثبت‌نام در مزدکس، <strong style="color:var(--gold)">۵ توکن اهرم هدیه</strong> بگیر.
+        هر روز معامله کن، امتیاز جمع کن و در قرعه‌کشی بزرگ شرکت کن.
+        این ماه <span style="color:var(--gold)">۱۰ شمش طلا</span> منتظر برنده‌هاست.
+      </p>
+
+      <div class="ticker-bar" id="ticker">
+        <div class="ticker-item">
+          <span class="ticker-name">BTC</span>
+          <span class="ticker-price" id="btc-price">۴,۰۱۲,۳۵۰,۰۰۰</span>
+          <span class="ticker-chg up" id="btc-chg">+۲.۱٪</span>
+        </div>
+        <div class="ticker-item">
+          <span class="ticker-name">ETH</span>
+          <span class="ticker-price" id="eth-price">۱۳۸,۴۰۰,۰۰۰</span>
+          <span class="ticker-chg up" id="eth-chg">+۱.۴٪</span>
+        </div>
+        <div class="ticker-item">
+          <span class="ticker-name">USDT</span>
+          <span class="ticker-price" id="usdt-price">۷۲,۸۰۰</span>
+          <span class="ticker-chg dn" id="usdt-chg">-۰.۲٪</span>
+        </div>
+        <div class="ticker-item">
+          <span class="ticker-name">SOL</span>
+          <span class="ticker-price" id="sol-price">۱۱,۲۴۰,۰۰۰</span>
+          <span class="ticker-chg up" id="sol-chg">+۳.۷٪</span>
+        </div>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-num">+۸۵,۰۰۰</div>
+          <div class="stat-label">کاربر فعال</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">+۲۰۰</div>
+          <div class="stat-label">ارز دیجیتال</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">۲۴/۷</div>
+          <div class="stat-label">پشتیبانی</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM -->
+    <div class="form-card">
+      <div class="form-title">ثبت‌نام و دریافت هدیه</div>
+      <div class="form-subtitle">ظرف ۲ دقیقه حساب خود را بسازید</div>
+
+      <div class="gift-box">
+        <div class="gift-icon">🎁</div>
+        <div class="gift-text">
+          <strong>۵ توکن اهرم هدیه احراز هویت</strong>
+          <span>بدون قرعه‌کشی — واریز مستقیم ظرف ۲۴ ساعت</span>
+        </div>
+      </div>
+
+      <form id="regForm" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label>شماره موبایل</label>
+          <input type="tel" id="phone" placeholder="۰۹۱۲۳۴۵۶۷۸۹" maxlength="11" required>
+        </div>
+        <div class="form-group">
+          <label>ایمیل (اختیاری)</label>
+          <input type="email" id="email" placeholder="example@mail.com">
+        </div>
+        <div class="form-group">
+          <label>رمز عبور</label>
+          <input type="text" id="pass" placeholder="حداقل ۸ کاراکتر" required>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="terms" required>
+          <label for="terms" style="margin:0">
+            <a href="#" style="color:var(--gold)">شرایط و قوانین</a> مزدکس را مطالعه کرده و می‌پذیرم
+          </label>
+        </div>
+
+        <button type="submit" class="btn-primary">ثبت‌نام و دریافت هدیه 🎁</button>
+        <div class="form-note">🔒 اطلاعات شما کاملاً محفوظ و رمزگذاری‌شده است</div>
+      </form>
+
+      <div class="success-box" id="successBox">
+        <div class="check-circle">✓</div>
+        <h3>ثبت‌نام موفق!</h3>
+        <p>لینک تأیید به موبایل شما پیامک شد.<br>بعد از احراز هویت، ۵ توکن اهرم به حسابتان واریز می‌شود.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-center">
+    <div class="section-tag">چطور کار می‌کنه؟</div>
+    <h2>از ثبت‌نام تا <span class="hl">طلا</span></h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;max-width:500px">سه مرحله ساده — هر روز معامله کن، امتیاز جمع کن، آخر ماه قرعه‌کشی کن</p>
+
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num">۱</div>
+        <h3>ثبت‌نام کن</h3>
+        <p>با شماره موبایل ثبت‌نام کن و در ۲۴ ساعت احراز هویتت رو کامل کن.</p>
+        <div class="step-reward">🪙 ۵ توکن اهرم هدیه</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">۲</div>
+        <h3>اولین معامله</h3>
+        <p>حداقل ۱۰ توکن اهرم بخر یا بفروش و هدیه خوش‌آمدگویی بگیر.</p>
+        <div class="step-reward">🪙 ۵ توکن اهرم هدیه</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">۳</div>
+        <h3>هر روز معامله کن</h3>
+        <p>روزانه با انجام یک معامله، امتیاز جمع کن. هر یک میلیون تومان معامله = ۱۰ امتیاز.</p>
+        <div class="step-reward">⭐ ۱۰ امتیاز به ازای هر ۱M</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">۴</div>
+        <h3>دوستانت رو دعوت کن</h3>
+        <p>هر دوستی که ثبت‌نام کند، ۱۰ امتیاز اضافه می‌گیری. محدودیتی ندارد!</p>
+        <div class="step-reward">⭐ ۱۰ امتیاز به ازای هر دعوت</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">۵</div>
+        <h3>قرعه‌کشی آخر ماه</h3>
+        <p>هر امتیاز = یک بلیط قرعه‌کشی. آخر هر ماه ۱۰ برنده انتخاب می‌شوند.</p>
+        <div class="step-reward">🏆 ۱۰ شمش طلا</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GAMIFICATION -->
+<section id="game">
+  <div class="section-center">
+    <div class="section-tag">جدول امتیازات</div>
+    <h2>لیدربورد <span class="hl">این ماه</span></h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;max-width:500px">بیشترین امتیاز = بیشترین شانس در قرعه‌کشی</p>
+
+    <div class="game-grid">
+      <!-- Points Table -->
+      <div class="points-table">
+        <div class="points-header">🎯 جدول کسب امتیاز</div>
+        <div class="points-row">
+          <span class="action">📝 ثبت‌نام + احراز هویت</span>
+          <span class="pts">+۵ امتیاز</span>
+        </div>
+        <div class="points-row">
+          <span class="action">💹 هر ۱ میلیون تومان معامله</span>
+          <span class="pts">+۱۰ امتیاز</span>
+        </div>
+        <div class="points-row">
+          <span class="action">👥 دعوت از هر دوست</span>
+          <span class="pts">+۱۰ امتیاز</span>
+        </div>
+        <div class="points-row" style="background:rgba(201,168,76,0.04)">
+          <span class="action" style="color:var(--gold)">🏆 قرعه‌کشی آخر ماه</span>
+          <span class="pts" style="color:var(--accent)">۱۰ شمش طلا</span>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="leaderboard">
+        <div class="lb-header"><span class="lb-badge"></span> لیدربورد زنده</div>
+        <div class="lb-row">
+          <div class="lb-rank top">🥇</div>
+          <div class="lb-avatar">AK</div>
+          <div class="lb-name">علی ک***</div>
+          <div class="lb-pts">۲,۴۸۰ pt</div>
+        </div>
+        <div class="lb-row">
+          <div class="lb-rank top">🥈</div>
+          <div class="lb-avatar">MR</div>
+          <div class="lb-name">محمد ر***</div>
+          <div class="lb-pts">۱,۹۲۰ pt</div>
+        </div>
+        <div class="lb-row">
+          <div class="lb-rank top">🥉</div>
+          <div class="lb-avatar">SH</div>
+          <div class="lb-name">سارا ه***</div>
+          <div class="lb-pts">۱,۶۵۵ pt</div>
+        </div>
+        <div class="lb-row">
+          <div class="lb-rank">۴</div>
+          <div class="lb-avatar">FN</div>
+          <div class="lb-name">فاطمه ن***</div>
+          <div class="lb-pts">۱,۲۱۰ pt</div>
+        </div>
+        <div class="lb-row">
+          <div class="lb-rank">۵</div>
+          <div class="lb-avatar">RG</div>
+          <div class="lb-name">رضا گ***</div>
+          <div class="lb-pts">۹۸۵ pt</div>
+        </div>
+        <div class="lb-row" style="background:rgba(45,212,160,0.05);border-top:0.5px solid rgba(45,212,160,0.15)">
+          <div class="lb-rank" style="color:var(--accent)">شما</div>
+          <div class="lb-avatar" style="background:rgba(45,212,160,0.15);color:var(--accent)">؟</div>
+          <div class="lb-name" style="color:var(--accent)">جای شما اینجاست!</div>
+          <div class="lb-pts" style="color:var(--accent)">ثبت‌نام کن</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRIZE -->
+<section id="prize">
+  <div class="section-center" style="text-align:center">
+    <div class="section-tag">جایزه بزرگ</div>
+    <h2>قرعه‌کشی <span class="hl">مزدکس</span></h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;max-width:500px;margin:0 auto">آخر هر ماه، ۱۰ نفر از بین کاربران فعال انتخاب می‌شوند</p>
+
+    <div class="prize-card">
+      <div class="prize-icon">🥇</div>
+      <h3>۱۰ شمش طلا</h3>
+      <p>هر کاربری که ثبت‌نام کند و حداقل یک معامله انجام دهد، در قرعه‌کشی شرکت دارد. هر چقدر امتیاز بیشتر، شانس بیشتر!</p>
+
+      <div class="prize-countdown">
+        <div class="cd-item">
+          <span class="cd-num" id="cd-days">۲۳</span>
+          <div class="cd-label">روز</div>
+        </div>
+        <div class="cd-item">
+          <span class="cd-num" id="cd-hours">۱۴</span>
+          <div class="cd-label">ساعت</div>
+        </div>
+        <div class="cd-item">
+          <span class="cd-num" id="cd-mins">۳۸</span>
+          <div class="cd-label">دقیقه</div>
+        </div>
+        <div class="cd-item">
+          <span class="cd-num" id="cd-secs">۰۰</span>
+          <div class="cd-label">ثانیه</div>
+        </div>
+      </div>
+
+      <a href="#register" class="btn-outline">همین الان ثبت‌نام کن ↑</a>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-center">
+    <div class="section-tag">چرا مزدکس؟</div>
+    <h2>امکانات <span class="hl">حرفه‌ای</span></h2>
+
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-icon">⚡</div>
+        <h4>احراز هویت هوشمند</h4>
+        <p>تأیید هویت سریع با هوش مصنوعی — کمتر از ۵ دقیقه</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📊</div>
+        <h4>+۲۰۰ ارز دیجیتال</h4>
+        <p>معامله بیت‌کوین، اتریوم، توکن‌های اهرمی و صدها ارز دیگر</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔒</div>
+        <h4>امنیت بانکی</h4>
+        <p>رمزگذاری end-to-end و ذخیره‌سازی سرد دارایی‌ها</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📱</div>
+        <h4>اپ iOS و Android</h4>
+        <p>معامله در هر جا با اپ حرفه‌ای مزدکس</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">💬</div>
+        <h4>پشتیبانی ۲۴/۷</h4>
+        <p>تیم پشتیبانی مزدکس شبانه‌روز در کنار شماست</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">💸</div>
+        <h4>کارمزد رقابتی</h4>
+        <p>کمترین کارمزد در میان صرافی‌های ایرانی</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="section-center">
+    <div class="section-tag">سوالات متداول</div>
+    <h2>پرسش‌های <span class="hl">شما</span></h2>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          چطور ۵ توکن اهرم هدیه بگیرم؟
+          <span class="faq-arrow">▾</span>
+        </button>
+        <div class="faq-a">
+          کافیست ثبت‌نام کنید و ظرف ۲۴ ساعت احراز هویتتان را کامل کنید. بعد از تأیید، ۵ توکن اهرم مستقیماً به حسابتان واریز می‌شود — بدون قرعه‌کشی.
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          حداقل مبلغ معامله چقدر است؟
+          <span class="faq-arrow">▾</span>
+        </button>
+        <div class="faq-a">
+          حداقل معامله در بازار توکن اهرم ۱۰ توکن اهرم است. برای سایر بازارها، محدودیت‌های جداگانه اعمال می‌شود.
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          امتیازات چطور محاسبه می‌شوند؟
+          <span class="faq-arrow">▾</span>
+        </button>
+        <div class="faq-a">
+          ثبت‌نام + احراز هویت = ۵ امتیاز | هر ۱ میلیون تومان معامله = ۱۰ امتیاز | هر دوست دعوت‌شده = ۱۰ امتیاز. امتیازات به صورت روزانه به‌روزرسانی می‌شوند.
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          قرعه‌کشی چه زمانی انجام می‌شود؟
+          <span class="faq-arrow">▾</span>
+        </button>
+        <div class="faq-a">
+          قرعه‌کشی آخر هر ماه به صورت زنده برگزار می‌شود. نتایج از طریق پیامک و ایمیل به برندگان اطلاع‌رسانی می‌شود.
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          آیا کاربران قبلی هم می‌توانند شرکت کنند؟
+          <span class="faq-arrow">▾</span>
+        </button>
+        <div class="faq-a">
+          بله! کاربران فعلی مزدکس هم با انجام معامله می‌توانند امتیاز جمع کنند و در قرعه‌کشی شرکت داشته باشند. هدیه احراز هویت فقط برای کاربران جدید است.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BOTTOM -->
+<section class="cta-section">
+  <div style="max-width:600px;margin:0 auto">
+    <div class="section-tag">همین الان شروع کن</div>
+    <h2>جای شما <span class="hl">خالیه!</span></h2>
+    <p>ثبت‌نام کن، هدیه بگیر، معامله کن و آخر ماه شمش طلا ببر.</p>
+    <a href="#register" class="btn-cta">ثبت‌نام رایگان 🎁</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">مزدکس</div>
+  <div class="footer-links">
+    <a href="#">درباره ما</a>
+    <a href="#">قوانین</a>
+    <a href="#">حریم خصوصی</a>
+    <a href="#">پشتیبانی</a>
+    <a href="#">کارمزدها</a>
+  </div>
+  <p>© ۱۴۰۴ مزدکس — تمامی حقوق محفوظ است</p>
+</footer>
+
+<script>
+// Form submit
+async function handleSubmit(e) {
+  e.preventDefault();
+  const phone = document.getElementById('phone').value.replace(/\s/g,'');
+  const email = document.getElementById('email').value;
+  const btn   = e.target.querySelector('button[type=submit]');
+
+  if (phone.length < 10) {
+    alert('شماره موبایل معتبر وارد کنید');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'در حال ثبت‌نام...';
+
+  try {
+    const res = await fetch('/register.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, email, source: 'landing_sms' })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      document.getElementById('regForm').style.display = 'none';
+      document.getElementById('successBox').style.display = 'block';
+    } else {
+      alert(data.msg || 'خطایی رخ داد. دوباره امتحان کنید.');
+      btn.disabled = false;
+      btn.textContent = 'ثبت‌نام و دریافت هدیه 🎁';
+    }
+  } catch {
+    // اگر PHP در دسترس نبود (تست local)
+    document.getElementById('regForm').style.display = 'none';
+    document.getElementById('successBox').style.display = 'block';
+  }
+}
+
+// FAQ toggle
+function toggleFaq(btn) {
+  const item = btn.parentElement;
+  item.classList.toggle('open');
+}
+
+// Countdown
+function updateCountdown() {
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  let diff = Math.floor((end - now) / 1000);
+  const d = Math.floor(diff / 86400); diff %= 86400;
+  const h = Math.floor(diff / 3600); diff %= 3600;
+  const m = Math.floor(diff / 60);
+  const s = diff % 60;
+  const toFa = n => n.toString().replace(/\d/g, c => '۰۱۲۳۴۵۶۷۸۹'[c]);
+  document.getElementById('cd-days').textContent = toFa(d);
+  document.getElementById('cd-hours').textContent = toFa(String(h).padStart(2,'0'));
+  document.getElementById('cd-mins').textContent = toFa(String(m).padStart(2,'0'));
+  document.getElementById('cd-secs').textContent = toFa(String(s).padStart(2,'0'));
+}
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// Ticker mock animation
+const tickers = {
+  btc: [4012350000, 4018200000, 4008900000, 4022100000],
+  eth: [138400000, 139200000, 137800000, 140100000],
+  usdt: [72800, 72950, 72600, 73100],
+  sol: [11240000, 11380000, 11190000, 11520000],
+};
+let ti = 0;
+function toFaNum(n) {
+  return n.toLocaleString('fa-IR');
+}
+setInterval(() => {
+  ti = (ti + 1) % 4;
+  document.getElementById('btc-price').textContent = toFaNum(tickers.btc[ti]);
+  document.getElementById('eth-price').textContent = toFaNum(tickers.eth[ti]);
+  document.getElementById('usdt-price').textContent = toFaNum(tickers.usdt[ti]);
+  document.getElementById('sol-price').textContent = toFaNum(tickers.sol[ti]);
+}, 3000);
+</script>
+</body>
+</html>

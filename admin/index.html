@@ -1,0 +1,415 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پنل ادمین مزدکس</title>
+<link rel="icon" type="image/png" href="../images/mazdax-horizontal-dark-favaicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/admin.css?v=2">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 1: LOGIN
+══════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img class="admin-brand-logo" src="../images/mazdax-horizontal-dark-fa.png" alt="مزدکس" style="width:150px;height:40px;object-fit:contain;">
+    </div>
+    <div class="auth-title">ورود به پنل مدیریت</div>
+
+    <div class="msg-box error" id="login-err">
+      <span>⚠</span>
+      <div>
+        <span id="login-err-text"></span>
+        <span class="lock-timer" id="lock-countdown" style="display:none"></span>
+      </div>
+    </div>
+    <div class="msg-box warn" id="login-warn">
+      <span>🔒</span><span id="login-warn-text"></span>
+    </div>
+
+    <div class="field">
+      <label>نام کاربری</label>
+      <div class="input-wrap">
+        <input type="text" id="inp-user" autocomplete="username" placeholder="admin" onkeydown="if(event.key==='Enter')document.getElementById('inp-pass').focus()">
+        <span class="input-icon">👤</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>رمز عبور</label>
+      <div class="input-wrap">
+        <input type="password" id="inp-pass" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <span class="input-icon" id="pass-toggle" onclick="togglePass('inp-pass','pass-toggle')" title="نمایش/مخفی">👁</span>
+      </div>
+    </div>
+
+    <div class="captcha-box" id="captcha-wrap" style="display:none">
+      <div class="captcha-q" id="captcha-q"></div>
+      <input type="text" id="captcha-ans" placeholder="؟" maxlength="4" autocomplete="off">
+      <span class="captcha-refresh" onclick="newCaptcha()" title="کپچای جدید">↻</span>
+    </div>
+
+    <div class="attempt-dots" id="attempt-dots"></div>
+
+    <div style="height:0.85rem"></div>
+    <button class="btn btn-gold btn-full" id="login-btn" onclick="doLogin()">
+      <span id="login-btn-text">ورود</span>
+    </button>
+
+    <div style="text-align:center;margin-top:1rem;font-size:0.72rem;color:var(--muted)">
+      رمز پیش‌فرض: <code style="color:var(--gold)">Mazdex@1404</code>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 2: CHANGE PASSWORD (اجباری)
+══════════════════════════════════════════════ -->
+<div id="screen-change-pass" class="screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img class="admin-brand-logo" src="../images/mazdax-horizontal-dark-fa.png" alt="مزدکس" style="width:150px;height:40px;object-fit:contain;">
+    </div>
+    <div class="auth-title">
+      <span style="color:var(--orange)">⚠</span> تغییر رمز عبور اجباری
+    </div>
+    <div class="msg-box warn show" style="margin-bottom:1.25rem">
+      <span>🔐</span>
+      <span>برای امنیت بیشتر، رمز پیش‌فرض باید قبل از ورود تغییر کند.</span>
+    </div>
+
+    <div class="msg-box error" id="cp-err"><span>⚠</span><span id="cp-err-text"></span></div>
+    <div class="msg-box success" id="cp-ok"><span>✓</span><span id="cp-ok-text"></span></div>
+
+    <div class="field">
+      <label>رمز فعلی</label>
+      <div class="input-wrap">
+        <input type="password" id="cp-current" placeholder="رمز پیش‌فرض">
+        <span class="input-icon" onclick="togglePass('cp-current',this)">👁</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>رمز جدید</label>
+      <div class="input-wrap">
+        <input type="password" id="cp-new" placeholder="حداقل ۸ کاراکتر" oninput="checkStrength(this.value)">
+        <span class="input-icon" onclick="togglePass('cp-new',this)">👁</span>
+      </div>
+      <div class="strength-bar" id="str-bar"><div></div><div></div><div></div><div></div></div>
+      <div class="strength-label" id="str-lbl" style="color:var(--muted)"></div>
+    </div>
+    <div class="field">
+      <label>تکرار رمز جدید</label>
+      <div class="input-wrap">
+        <input type="password" id="cp-confirm" placeholder="••••••••" onkeydown="if(event.key==='Enter')doChangePass()">
+        <span class="input-icon" onclick="togglePass('cp-confirm',this)">👁</span>
+      </div>
+    </div>
+
+    <div style="background:var(--dark-3);border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.75rem;color:var(--muted)">
+      قوانین رمز عبور:<br>
+      <span id="rule-len" class="rule">○ حداقل ۸ کاراکتر</span><br>
+      <span id="rule-upper" class="rule">○ حداقل یک حرف بزرگ انگلیسی</span><br>
+      <span id="rule-num" class="rule">○ حداقل یک عدد</span><br>
+      <span id="rule-special" class="rule">○ حداقل یک کاراکتر خاص (@#$%...)</span>
+    </div>
+
+    <button class="btn btn-gold btn-full" onclick="doChangePass()">تغییر رمز و ورود</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHANGE PASS MODAL (اختیاری از داخل پنل)
+══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-change-pass">
+  <div class="modal">
+    <div class="modal-title">🔐 تغییر رمز عبور</div>
+    <div class="msg-box error" id="mcp-err"><span>⚠</span><span id="mcp-err-text"></span></div>
+    <div class="msg-box success" id="mcp-ok"><span>✓</span><span id="mcp-ok-text"></span></div>
+    <div class="field">
+      <label>رمز فعلی</label>
+      <div class="input-wrap"><input type="password" id="mcp-current" placeholder="رمز فعلی">
+        <span class="input-icon" onclick="togglePass('mcp-current',this)">👁</span></div>
+    </div>
+    <div class="field">
+      <label>رمز جدید</label>
+      <div class="input-wrap"><input type="password" id="mcp-new" placeholder="رمز جدید" oninput="checkStrength(this.value,'mcp-')">
+        <span class="input-icon" onclick="togglePass('mcp-new',this)">👁</span></div>
+      <div class="strength-bar" id="mcp-str-bar"><div></div><div></div><div></div><div></div></div>
+      <div class="strength-label" id="mcp-str-lbl" style="color:var(--muted)"></div>
+    </div>
+    <div class="field">
+      <label>تکرار رمز جدید</label>
+      <div class="input-wrap"><input type="password" id="mcp-confirm" placeholder="تکرار">
+        <span class="input-icon" onclick="togglePass('mcp-confirm',this)">👁</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:0.5rem">
+      <button class="btn btn-gold" style="flex:1" onclick="doModalChangePass()">ذخیره</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-change-pass')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ADD ADMIN USER MODAL
+══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-add-user">
+  <div class="modal">
+    <div class="modal-title">👤 افزودن ادمین جدید</div>
+    <div class="msg-box error" id="au-err"><span>⚠</span><span id="au-err-text"></span></div>
+    <div class="field">
+      <label>نام کاربری</label>
+      <div class="input-wrap"><input type="text" id="au-user" placeholder="فقط حروف انگلیسی و عدد" autocomplete="off">
+        <span class="input-icon">👤</span></div>
+    </div>
+    <div class="field">
+      <label>رمز عبور موقت</label>
+      <div class="input-wrap"><input type="text" id="au-pass" placeholder="کاربر موظف است آن را عوض کند" autocomplete="off">
+        <span class="input-icon" onclick="genTempPass()">🎲</span></div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">با کلیک روی 🎲 رمز تصادفی بساز</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:0.5rem">
+      <button class="btn btn-gold" style="flex:1" onclick="doAddUser()">ایجاد کاربر</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-add-user')">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     APP
+══════════════════════════════════════════════ -->
+<div id="app" class="app">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="name">
+        <img class="admin-brand-logo" src="../images/mazdax-horizontal-dark-fa.png" alt="مزدکس" style="width:150px;height:40px;object-fit:contain;">
+      </div>
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-av">A</div>
+        <div class="sb-username" id="sb-uname">admin</div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-sec">داشبورد</div>
+      <div class="sb-item active" onclick="nav('dashboard',this)">📊 خلاصه</div>
+      <div class="sb-sec">ادیت لندینگ</div>
+      <div class="sb-item" onclick="nav('visual',this)">✏️ ویرایش بصری</div>
+      <div class="sb-item" onclick="nav('html',this)">💻 ویرایش HTML</div>
+      <div class="sb-sec">کاربران</div>
+      <div class="sb-item" onclick="nav('users',this)">👥 ثبت‌نامی‌ها <span class="sb-badge" id="ub">0</span></div>
+      <div class="sb-item" onclick="nav('leaderboard',this)">🥇 لیدربورد</div>
+      <div class="sb-sec">مدیریت</div>
+      <div class="sb-item" onclick="nav('admin-users',this)" id="sb-admin-users" style="display:none">🛡 ادمین‌ها</div>
+      <div class="sb-item" onclick="nav('settings',this)">⚙️ تنظیمات</div>
+      <div class="sb-item" onclick="nav('export',this)">💾 خروجی داده</div>
+    </nav>
+    <div class="sb-footer">
+      <span>v1.0</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline" style="font-size:0.68rem;padding:3px 7px" onclick="openModal('modal-change-pass')">🔐</button>
+        <button class="btn btn-red" style="font-size:0.68rem;padding:3px 7px" onclick="doLogout()">خروج</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="ttl">داشبورد</div>
+      <div class="topbar-actions">
+        <span id="save-status" style="font-size:0.72rem;color:var(--muted)"></span>
+        <div class="topbar-user">👤 <span id="tb-user">—</span></div>
+        <button class="btn btn-outline" style="font-size:0.78rem" onclick="window.open('/','_blank')">👁 لندینگ</button>
+        <button class="btn btn-gold" style="font-size:0.78rem" onclick="saveChanges()">💾 ذخیره</button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-row">
+          <div class="stat-card"><div class="lbl">ثبت‌نامی‌ها</div><div class="val" id="s-total">—</div><div class="sub" id="s-today">—</div></div>
+          <div class="stat-card"><div class="lbl">احراز هویت</div><div class="val" id="s-kyc">—</div><div class="sub" style="color:var(--gold)">هدیه واریزشده</div></div>
+          <div class="stat-card"><div class="lbl">کل امتیاز</div><div class="val" id="s-pts">—</div><div class="sub">این ماه</div></div>
+          <div class="stat-card"><div class="lbl">روز تا قرعه‌کشی</div><div class="val" id="s-days">—</div><div class="sub" style="color:var(--red)">پایان ماه</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">آخرین ثبت‌نام‌ها
+            <button class="btn btn-outline" style="font-size:0.72rem" onclick="nav('users',document.querySelector('[onclick*=users]'))">همه</button>
+          </div>
+          <div style="padding:0"><table class="tbl"><thead><tr><th>موبایل</th><th>تاریخ</th><th>KYC</th><th>امتیاز</th></tr></thead><tbody id="dash-users"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">🛡 وضعیت امنیتی</div>
+          <div class="card-body" id="security-status" style="font-size:0.82rem"></div>
+        </div>
+      </div>
+
+      <!-- VISUAL EDITOR -->
+      <div class="page" id="page-visual">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab(this,'ve-hero')">هیرو</button>
+          <button class="tab" onclick="switchTab(this,'ve-form')">فرم</button>
+          <button class="tab" onclick="switchTab(this,'ve-steps')">مراحل</button>
+          <button class="tab" onclick="switchTab(this,'ve-faq')">سوالات</button>
+        </div>
+        <div id="ve-hero">
+          <div class="card"><div class="card-hdr">🖼 هیرو</div><div class="card-body">
+            <div class="form-grid">
+              <div class="fg full"><label>تیتر خط اول</label><input id="ve-h1" type="text" value="معامله کن،"></div>
+              <div class="fg full"><label>تیتر خط دوم</label><input id="ve-h2" type="text" value="امتیاز جمع کن،"></div>
+              <div class="fg full"><label>تیتر طلایی</label><input id="ve-h3" type="text" value="طلا ببر!"></div>
+              <div class="fg full"><label>توضیحات</label><textarea id="ve-hdesc">با ثبت‌نام در مزدکس، ۵ توکن اهرم هدیه بگیر.</textarea></div>
+            </div>
+            <button class="btn btn-gold" onclick="applyVisual()">✓ اعمال و ذخیره</button>
+          </div></div>
+        </div>
+        <div id="ve-form" style="display:none">
+          <div class="card"><div class="card-hdr">📋 فرم</div><div class="card-body">
+            <div class="form-grid">
+              <div class="fg"><label>عنوان فرم</label><input id="ve-ft" type="text" value="ثبت‌نام و دریافت هدیه"></div>
+              <div class="fg"><label>زیرعنوان</label><input id="ve-fs" type="text" value="ظرف ۲ دقیقه حساب بسازید"></div>
+              <div class="fg full"><label>متن هدیه</label><input id="ve-fg" type="text" value="۵ توکن اهرم هدیه احراز هویت"></div>
+              <div class="fg full"><label>دکمه ثبت‌نام</label><input id="ve-fbtn" type="text" value="ثبت‌نام و دریافت هدیه 🎁"></div>
+            </div>
+            <button class="btn btn-gold" onclick="applyVisual()">✓ اعمال و ذخیره</button>
+          </div></div>
+        </div>
+        <div id="ve-steps" style="display:none">
+          <div class="card"><div class="card-hdr">📋 مراحل <button class="btn btn-outline" style="font-size:0.72rem" onclick="addStep()">+</button></div>
+          <div class="card-body" id="steps-list"></div></div>
+        </div>
+        <div id="ve-faq" style="display:none">
+          <div class="card"><div class="card-hdr">❓ سوالات <button class="btn btn-outline" style="font-size:0.72rem" onclick="addFaq()">+</button></div>
+          <div class="card-body" id="faq-list"></div></div>
+        </div>
+      </div>
+
+      <!-- HTML EDITOR -->
+      <div class="page" id="page-html">
+        <div class="card" style="overflow:hidden">
+          <div class="card-hdr">💻 ویرایش HTML مستقیم
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-outline" style="font-size:0.72rem" onclick="loadHtml()">↻ بارگذاری</button>
+              <button class="btn btn-gold" style="font-size:0.72rem" onclick="saveHtml()">💾 ذخیره فایل</button>
+            </div>
+          </div>
+          <div class="editor-toolbar">
+            <button onclick="findReplace()">🔍 جستجو/جایگزین</button>
+            <button onclick="insertTag('strong')"><b>B</b></button>
+            <button onclick="insertTag('em')"><i>I</i></button>
+            <span style="font-size:0.7rem;color:var(--muted);margin-right:auto" id="char-count"></span>
+          </div>
+          <textarea id="html-editor" spellcheck="false" oninput="updateCharCount()" placeholder="در حال بارگذاری..."></textarea>
+        </div>
+      </div>
+
+      <!-- LANDING USERS -->
+      <div class="page" id="page-users">
+        <div class="card">
+          <div class="card-hdr">👥 کاربران ثبت‌نامی
+            <div style="display:flex;gap:6px;align-items:center">
+              <div class="search-row" style="width:175px"><span>🔍</span>
+                <input type="text" placeholder="جستجو..." oninput="filterUsers(this.value)"></div>
+              <button class="btn btn-green" onclick="exportUsers()">📥 CSV</button>
+            </div>
+          </div>
+          <div style="padding:0"><table class="tbl"><thead><tr><th>موبایل</th><th>تاریخ</th><th>KYC</th><th>امتیاز</th><th>منبع</th><th>عملیات</th></tr></thead>
+          <tbody id="users-body"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div class="page" id="page-leaderboard">
+        <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card"><div class="lbl">کل امتیاز</div><div class="val" id="lb-pts">—</div></div>
+          <div class="stat-card"><div class="lbl">فعال</div><div class="val" id="lb-act">—</div></div>
+          <div class="stat-card"><div class="lbl">رتبه اول</div><div class="val" id="lb-top">—</div><div class="sub" id="lb-top-n">—</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">🥇 لیدربورد <button class="btn btn-outline" style="font-size:0.72rem" onclick="exportLeaderboard()">📥 CSV</button></div>
+          <div style="padding:0"><table class="tbl"><thead><tr><th>رتبه</th><th>موبایل</th><th>امتیاز</th><th>معاملات</th><th>دعوت‌ها</th></tr></thead>
+          <tbody id="lb-body"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- ADMIN USERS -->
+      <div class="page" id="page-admin-users">
+        <div class="card">
+          <div class="card-hdr">🛡 مدیریت ادمین‌ها
+            <button class="btn btn-gold" style="font-size:0.78rem" onclick="openModal('modal-add-user')">+ ادمین جدید</button>
+          </div>
+          <div class="card-body" id="admin-users-list">در حال بارگذاری...</div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="card"><div class="card-hdr">⚙️ CRM و Webhook</div><div class="card-body">
+          <div class="form-grid">
+            <div class="fg full"><label>Webhook ثبت‌نام</label><input id="wh-reg" type="text" placeholder="https://crm.yourcompany.com/webhooks/register"></div>
+            <div class="fg full"><label>Webhook KYC</label><input id="wh-kyc" type="text" placeholder="https://..."></div>
+            <div class="fg"><label>API Key</label><input id="wh-key" type="text" placeholder="sk-..."></div>
+            <div class="fg"><label>Secret</label><input id="wh-secret" type="text"></div>
+          </div>
+          <div class="tog-wrap"><div class="tog on" id="wh-active" onclick="this.classList.toggle('on')"></div><span class="tog-lbl">ارسال به CRM فعال</span></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-gold" onclick="saveSettings()">💾 ذخیره</button><button class="btn btn-outline" onclick="notify('تست موفق ✓')">🔧 تست</button></div>
+        </div></div>
+        <div class="card"><div class="card-hdr">📱 پیامک</div><div class="card-body">
+          <div class="form-grid">
+            <div class="fg"><label>سرویس‌دهنده</label><select id="sms-prov"><option>ملی پیامک</option><option>کاوه نگار</option><option>گفتینو</option></select></div>
+            <div class="fg"><label>شماره ارسال</label><input id="sms-num" type="text" placeholder="3000..."></div>
+            <div class="fg full"><label>API Key</label><input id="sms-key" type="text"></div>
+            <div class="fg full"><label>متن پیامک</label><textarea id="sms-txt">مزدکس: ثبت نام موفق. برای دریافت هدیه احراز هویت کنید: {link}</textarea></div>
+          </div>
+          <button class="btn btn-gold" onclick="saveSettings()">💾 ذخیره</button>
+        </div></div>
+      </div>
+
+      <!-- EXPORT -->
+      <div class="page" id="page-export">
+        <div class="card"><div class="card-hdr">💾 خروجی و قرعه‌کشی</div><div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div style="background:var(--dark-3);border-radius:10px;padding:1.25rem;border:0.5px solid var(--border-dim)">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem">📊</div>
+              <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.25rem">کاربران CSV</div>
+              <div style="font-size:0.74rem;color:var(--muted);margin-bottom:0.75rem">همه ثبت‌نامی‌ها</div>
+              <button class="btn btn-gold" onclick="exportUsers()">دانلود</button>
+            </div>
+            <div style="background:var(--dark-3);border-radius:10px;padding:1.25rem;border:0.5px solid var(--border-dim)">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem">🏆</div>
+              <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.25rem">لیدربورد CSV</div>
+              <div style="font-size:0.74rem;color:var(--muted);margin-bottom:0.75rem">رتبه‌بندی ماه</div>
+              <button class="btn btn-outline" onclick="exportLeaderboard()">دانلود</button>
+            </div>
+            <div style="background:var(--dark-3);border-radius:10px;padding:1.25rem;border:0.5px solid var(--border-dim)">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem">⚙️</div>
+              <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.25rem">تنظیمات JSON</div>
+              <div style="font-size:0.74rem;color:var(--muted);margin-bottom:0.75rem">پشتیبان کامل</div>
+              <button class="btn btn-outline" onclick="exportSettings()">دانلود</button>
+            </div>
+            <div style="background:var(--dark-3);border-radius:10px;padding:1.25rem;border:0.5px solid var(--border-dim)">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem">🎲</div>
+              <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.25rem">قرعه‌کشی وزنی</div>
+              <div style="font-size:0.74rem;color:var(--muted);margin-bottom:0.75rem">انتخاب برندگان</div>
+              <button class="btn btn-red" onclick="runLottery()">اجرا</button>
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="notify" id="notify-bar"></div>
+
+
+
+<script src="js/admin.js"></script>
+</body>
+</html>
