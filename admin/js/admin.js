@@ -1,8 +1,8 @@
 ﻿// ════════════════════════════════════════════════
 // CONFIG
 // ════════════════════════════════════════════════
-const AUTH = '/admin/auth.php';
-const API  = '/admin/save.php';
+const AUTH = './auth.php';
+const API  = './save.php';
 let csrfToken = '';
 let currentUser = '';
 let failedAttempts = 0;
@@ -26,12 +26,28 @@ function newCaptcha() {
 // AUTH API
 // ════════════════════════════════════════════════
 async function authCall(action, body={}) {
+  if (action === 'login' && !csrfToken) await getCsrf();
+
   const r = await fetch(`${AUTH}?action=${action}`, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     credentials: 'same-origin',
+    cache: 'no-store',
     body: JSON.stringify({action, csrf: csrfToken, ...body})
   });
+
+  if (r.status === 403 && action === 'login') {
+    await getCsrf();
+    const retry = await fetch(`${AUTH}?action=${action}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'same-origin',
+      cache: 'no-store',
+      body: JSON.stringify({action, csrf: csrfToken, ...body})
+    });
+    return retry.json();
+  }
+
   return r.json();
 }
 
@@ -40,7 +56,13 @@ async function authCall(action, body={}) {
 // ════════════════════════════════════════════════
 async function getCsrf() {
   try {
-    const r = await fetch(`${AUTH}?action=get_csrf`, {credentials:'same-origin'});
+    const r = await fetch(`${AUTH}?action=get_csrf&t=${Date.now()}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'same-origin',
+      cache: 'no-store',
+      body: JSON.stringify({action:'get_csrf'})
+    });
     const d = await r.json();
     if (d.ok) csrfToken = d.csrf;
   } catch { /* PHP نیست */ }
@@ -386,7 +408,9 @@ async function initApp() {
 // API (save.php)
 // ════════════════════════════════════════════════
 async function apiCall(action, body=null) {
-  if (localStorage.getItem('mx_local_mode')) return localApi(action, body);
+  if (localStorage.getItem('mx_local_mode') && action !== 'read' && action !== 'save') {
+    return localApi(action, body);
+  }
   const opts = {
     method: body ? 'POST' : 'GET',
     credentials: 'same-origin',
@@ -520,6 +544,8 @@ async function loadHtml() {
 }
 async function saveHtml() {
   let html = document.getElementById('html-editor').value;
+  const saveStatus = document.getElementById('save-status');
+  const saveBtn = document.getElementById('save-btn');
 
   // اگر editor خالیه، اول فایل رو load کن
   if (!html.trim() || html === 'در حال بارگذاری...') {
@@ -533,24 +559,24 @@ async function saveHtml() {
     return;
   }
 
-  document.getElementById('save-status').textContent = '⏳ ذخیره...';
-  document.getElementById('save-btn').disabled = true;
+  if (saveStatus) saveStatus.textContent = '⏳ ذخیره...';
+  if (saveBtn) saveBtn.disabled = true;
 
   try {
     const r = await apiCall('save', { html });
     if (r.ok) {
       htmlContent = html;
       notify('فایل لندینگ ذخیره شد ✓');
-      document.getElementById('save-status').textContent = '✓ ذخیره شد';
+      if (saveStatus) saveStatus.textContent = '✓ ذخیره شد';
     } else {
       notify('خطا: ' + (r.msg || 'نامشخص'), true);
-      document.getElementById('save-status').textContent = '⚠ خطا';
+      if (saveStatus) saveStatus.textContent = '⚠ خطا';
     }
   } catch(e) {
     notify('خطا در اتصال به سرور: ' + e.message, true);
-    document.getElementById('save-status').textContent = '⚠ خطا';
+    if (saveStatus) saveStatus.textContent = '⚠ خطا';
   } finally {
-    document.getElementById('save-btn').disabled = false;
+    if (saveBtn) saveBtn.disabled = false;
   }
 }
 function updateCharCount() {
